@@ -1,0 +1,52 @@
+/* src/app/globals.css */
+
+:root {
+  /* Chế độ Sáng (Light Mode) */
+  --bg-app: #f1f5f9;         /* Màu nền xám nhạt sang trọng */
+  --bg-card: #ffffff;
+  --text-main: #64748b;
+  --text-title: #1e3a8a;
+  --border: #4f46e5;
+  --bg-input: #ffffff;
+  
+  --btn-main: #1d4ed8;
+  --btn-reg-1: #9333ea;
+  --btn-reg-2: #4f46e5;
+  --text-btn: #ffffff;
+}
+
+html.dark {
+  /* Chế độ Tối (Dark Mode) */
+  --bg-app: #121214;          /* Đen tuyền chuẩn Figma */
+  --bg-card: #121214;
+  --text-main: #9ca3af;
+  --text-title: #ffffff;
+  --border: #b088ff;          /* Tím neon rực rỡ */
+  --bg-input: #121214;
+
+  --btn-main: #c084fc;
+  --btn-reg-1: #6b21a8;
+  --btn-reg-2: #1e1b4b;
+  --text-btn: #ffffff;
+}
+
+/* Cấu hình Responsive toàn cục cho body */
+body {
+  background-color: var(--bg-app);
+  color: var(--text-title);
+  margin: 0;
+  padding: 20px; /* Thêm padding để khi trên điện thoại form không bị dính sát mép màn hình */
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center; /* Căn giữa form theo chiều ngang */
+  align-items: center;     /* Căn giữa form theo chiều dọc */
+  min-height: 100vh;       /* Chiếm hết chiều cao màn hình */
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: background-color 0.35s ease, color 0.35s ease;
+}
+
+/* Ép tất cả các phần tử chuyển màu mượt mà */
+* {
+  box-sizing: border-box;
+  transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease;
+}

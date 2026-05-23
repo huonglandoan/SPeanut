@@ -1,0 +1,167 @@
+/* src/styles/Register.module.css */
+
+/* ==========================================
+   1. KHUNG FORM ĐĂNG KÝ (RESPONSIVE CHUẨN)
+   ========================================== */
+.authCard {
+  width: 100%;
+  max-width: 400px;          /* Tự động co giãn trên điện thoại, tối đa 400px trên laptop */
+  padding: 40px 30px;
+  background-color: var(--bg-card);
+  border-radius: 20px; 
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); 
+  box-sizing: border-box;
+  transition: background-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+/* Tiêu đề Register */
+.authTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-title);
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 35px;
+}
+
+/* ==========================================
+   2. KHU VỰC Ô NHẬP LIỆU (INPUT VIÊN THUỐC)
+   ========================================== */
+.fieldPanel {
+  margin-bottom: 16px;       
+  width: 100%;
+}
+
+.fieldInput {
+  width: 100%;
+  padding: 14px 24px;        
+  border-radius: 9999px;     
+  border: 1.5px solid var(--border);
+  background-color: var(--bg-input);
+  color: var(--text-title);
+  font-size: 0.95rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.35s ease;
+}
+
+.fieldInput::placeholder {
+  color: var(--text-main);
+  opacity: 0.8;
+}
+
+/* ==========================================
+   3. CỤM NÚT BẤM DÀI XẾP CHỒNG (ĐẶC TRƯNG REGISTER FIGMA)
+   ========================================== */
+.actionGroup {
+  margin-top: 35px;
+  display: flex;
+  flex-direction: column;    /* Xếp chồng nút này lên nút kia */
+  gap: 12px;                 /* Khoảng cách giữa 2 nút */
+  align-items: center;
+}
+
+/* Nút bấm số 1: Register (Tím sáng/Tím đậm) */
+.buttonRegister {
+  width: 80%;               /* Giãn rộng 100% bằng các ô input ở trên */
+  padding: 14px 0;
+  border: none;
+  border-radius: 9999px;     /* Bo tròn viên thuốc */
+  background-color: var(--btn-reg-1);
+  color: var(--text-btn);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-align: center;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.buttonLink {
+  width: 80%;              
+  padding: 14px 0;
+  border: none;
+  border-radius: 9999px;     
+  background-color: var(--btn-reg-2);
+  color: var(--text-btn);
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;     
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.buttonRegister:active, .buttonLink:active {
+  transform: scale(0.98);    
+}
+
+.buttonRegister:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.switchContainer {
+  position: relative;
+  display: flex;
+  width: 70px;              
+  height: 30px;              
+  background-color: var(--bg-input); 
+  border: 1.5px solid var(--border);
+  border-radius: 9999px;     
+  margin: 0 0 30px auto;     
+  padding: 2px;
+  overflow: hidden;          
+  box-sizing: border-box;
+}
+
+.slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 35px;              
+  height: 23px;              
+  background-color: var(--border); 
+  border-radius: 9999px;     
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+  z-index: 1;                
+}
+
+:global(html.dark) .slider {
+  transform: translateX(65px); 
+}
+
+.switchBtn {
+  position: relative;
+  flex: 1;                  
+  background: none;
+  border: none;
+  font-size: 0.8rem;        
+  font-weight: 600;
+  color: var(--text-title);  
+  cursor: pointer;
+  text-align: center;
+  z-index: 2;                
+  mix-blend-mode: difference; 
+  transition: color 0.3s;
+}
+
+:global(html.dark) .switchBtn {
+  color: #ffffff;
+}
+
+@media (max-width: 480px) {
+  .authCard {
+    padding: 30px 20px;      
+    box-shadow: none;        
+  }
+
+  .authTitle {
+    font-size: 2.1rem;       
+    margin-bottom: 25px;
+  }
+  
+  .actionGroup {
+    margin-top: 25px;
+    gap: 10px;              
+  }
+}

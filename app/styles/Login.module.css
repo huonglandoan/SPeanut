@@ -1,0 +1,160 @@
+.authCard {
+  width: 400px;
+  margin: 80px auto; 
+  padding: 40px 30px;
+  background-color: var(--bg-card);
+  box-sizing: border-box;
+  border-radius: 20px; 
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); 
+}
+
+.authTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-title);
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 40px;
+}
+
+.fieldPanel {
+  margin-bottom: 22px;
+  width: 100%;
+}
+
+/* Tác động vào ô nhập liệu */
+.fieldInput {
+  width: 100%;
+  padding: 14px 24px;        
+  border-radius: 9999px;     
+  border: 1.5px solid var(--border);
+  background-color: var(--bg-input);
+  color: var(--text-title);
+  font-size: 0.95rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* Tác động vào nút bấm LOGIN */
+.buttonPrimary {
+  display: block;
+  width: 50%;               
+  margin: 35px auto 0 auto;
+  padding: 12px 0;
+  border: none;
+  border-radius: 9999px;     
+  background-color: var(--primary);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-align: center;
+}
+
+.fieldInput::placeholder {
+  color: var(--text-main);
+}
+
+.buttonPrimary {
+  display: block;
+  width: 80%;              
+  margin: 50px auto 0 auto;  
+  padding: 12px 0;
+  border: none;
+  border-radius: 9999px;    
+  background-color: var(--btn-main);
+  color: var(--text-btn);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase; 
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.buttonPrimary:disabled {
+  opacity: 0.5;
+}
+
+
+.switchContainer {
+  position: relative;
+  display: flex;
+  width: 70px;              /* Chiều rộng tổng của thanh gạt */
+  height: 30px;              /* Chiều cao */
+  background-color: var(--bg-input); /* Nền tiệp màu với ô input */
+  border: 1.5px solid var(--border);
+  border-radius: 9999px;     /* Bo tròn viên thuốc tuyệt đối */
+  margin: 0 0 30px auto;     /* Căn sát lề phải và cách dưới 30px */
+  padding: 2px;
+  overflow: hidden;          /* Giữ các thành phần con không tràn ra ngoài */
+  box-sizing: border-box;
+}
+
+
+.slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 35px;               /* Chiếm gần một nửa chiều rộng viên thuốc */
+  height: 23px;              /* Khít với chiều cao bên trong */
+  background-color: var(--border); /* Lấy luôn màu viền tím/xanh làm nền cục trượt */
+  border-radius: 9999px;     /* Cục trượt cũng bo tròn viên thuốc */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+  z-index: 1;                /* Nằm dưới chữ để không che mất chữ */
+}
+
+:global(html.dark) .slider {
+  transform: translateX(66px); 
+}
+
+.switchBtn {
+  position: relative;
+  flex: 1;                  
+  background: none;
+  border: none;
+  font-size: 50 rem;
+  font-weight: 600;
+  color: var(--text-title);  
+  cursor: pointer;
+  text-align: center;
+  z-index: 2;                
+  mix-blend-mode: difference;
+  transition: color 0.3s;
+}
+
+:global(html.dark) .switchBtn {
+  color: #ffffff;
+}
+
+
+.textMuted {
+  text-align: center;
+  margin-top: 30px;          
+  margin-bottom: 0;
+  font-size: 0.9rem;         
+  line-height: 1.5;
+  color: var(--text-main);   
+  opacity: 0.75;             
+  font-weight: 400;
+  letter-spacing: 0.2px;
+}
+
+
+.linkInline {
+  color: var(--border);      
+  text-decoration: none;     
+  font-weight: 600;          
+  margin-left: 4px;          
+  display: inline-block;
+  transition: color 0.2s ease, transform 0.2s ease; 
+}
+
+.linkInline:hover {
+  color: var(--primary);     
+  text-decoration: underline;
+}
+
+.linkInline:active {
+  transform: scale(0.96);
+}
