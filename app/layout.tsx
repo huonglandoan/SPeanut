@@ -17,7 +17,14 @@ export const metadata: Metadata = {
   title: 'SPeanut',
   description: 'Ứng dụng quản lý lương trợ giảng và lịch làm việc.',
   icons: {
-    icon: '/peanut.png', 
+    icon: [
+      {
+        url: '/peanut.png',
+        type: 'image/png', // Định nghĩa rõ ràng loại file ảnh
+      }
+    ],
+    shortcut: '/peanut.png',
+    apple: '/peanut.png',
   },
 };
 

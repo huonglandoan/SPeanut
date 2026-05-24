@@ -1,11 +1,11 @@
-'use client';
+'use client'
 
-import Link from 'next/link';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import { LoginWithAPI } from '../services/auth';
-import styles from '../styles/Login.module.css';
+import Link from 'next/link'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+import { LoginWithAPI } from '../services/auth'
+import styles from '../styles/Login.module.css'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -61,28 +61,15 @@ export default function LoginPage() {
 return (
   <div className={styles.authCard}>
     
-      
-        {/* Thanh gạt chuyển chế độ hình viên thuốc trượt mượt mà */}
-    <div className={styles.switchContainer}>
-      {/* Cục nền tròn sẽ trượt qua lại dựa vào class 'dark' */}
-      <div className={styles.slider} />
-      
-      <button 
-        type="button" 
-        className={styles.switchBtn} 
-        onClick={() => handleToggleTheme('light')}
-      >
-        ☀️ 
-      </button>
-      
-      <button 
-        type="button" 
-        className={styles.switchBtn} 
-        onClick={() => handleToggleTheme('dark')}
-      >
-        🌙 
-      </button>
-    </div>
+  
+        {/* 1. Thanh gạt viên thuốc trượt mượt mà đồng bộ với trang Login */}
+  <div className={styles.switchContainer}>
+    <div className={styles.slider} />
+    <button type="button" className={styles.switchBtn} onClick={() => handleToggleTheme('light')}>☀️</button>
+    <button type="button" className={styles.switchBtn} onClick={() => handleToggleTheme('dark')}>🌙</button>
+  </div>
+
+  {/* 2. Tiêu đề Register */}
 
     <p className={styles.authTitle}>Login</p>
 
@@ -112,7 +99,9 @@ return (
 
       {error && <div className={styles.feedbackError}>{error}</div>}
       {success && <div className={styles.feedbackSuccess}>{success}</div>}
-
+      
+      <div className={styles.actionGroup}></div>
+      
       <button type="submit" disabled={loading} className={styles.buttonPrimary}>
         {loading ? 'LOADING...' : 'LOGIN'}
       </button>

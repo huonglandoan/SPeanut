@@ -80,29 +80,18 @@
 .switchContainer {
   position: relative;
   display: flex;
-  width: 70px;              /* Chiều rộng tổng của thanh gạt */
-  height: 30px;              /* Chiều cao */
-  background-color: var(--bg-input); /* Nền tiệp màu với ô input */
+  width: 70px;              
+  height: 30px;              
+  background-color: var(--bg-input); 
   border: 1.5px solid var(--border);
-  border-radius: 9999px;     /* Bo tròn viên thuốc tuyệt đối */
-  margin: 0 0 30px auto;     /* Căn sát lề phải và cách dưới 30px */
+  border-radius: 9999px;     
+  margin: 0 0 30px auto;     
   padding: 2px;
-  overflow: hidden;          /* Giữ các thành phần con không tràn ra ngoài */
+  overflow: hidden;          
   box-sizing: border-box;
 }
 
 
-.slider {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 35px;               /* Chiếm gần một nửa chiều rộng viên thuốc */
-  height: 23px;              /* Khít với chiều cao bên trong */
-  background-color: var(--border); /* Lấy luôn màu viền tím/xanh làm nền cục trượt */
-  border-radius: 9999px;     /* Cục trượt cũng bo tròn viên thuốc */
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-  z-index: 1;                /* Nằm dưới chữ để không che mất chữ */
-}
 
 :global(html.dark) .slider {
   transform: translateX(66px); 
@@ -157,4 +146,56 @@
 
 .linkInline:active {
   transform: scale(0.96);
+}
+
+@media (max-width: 768px) {
+  .calendarMainCard {
+    padding: 16px 12px;
+    border-radius: 20px;     /* Mobile bo góc nhỏ hơn một chút */
+  }
+  .switchContainer {
+    transform: scale(0.9);   /* Thu nhỏ nhẹ cụm gạt trên mobile cho gọn gàng */
+    margin-bottom: 12px;
+  }
+}
+
+.actionGroup {
+  margin-top: 35px;
+  display: flex;
+  flex-direction: column;    /* Xếp chồng nút này lên nút kia */
+  gap: 12px;                 /* Khoảng cách giữa 2 nút */
+  align-items: center;
+}
+
+:global(html.dark) .switchBtn {
+  color: #ffffff;
+}
+
+@media (max-width: 480px) {
+  .authCard {
+    padding: 30px 20px;      
+    box-shadow: none;        
+  }
+
+  .authTitle {
+    font-size: 2.1rem;       
+    margin-bottom: 25px;
+  }
+  
+  .actionGroup {
+    margin-top: 25px;
+    gap: 10px;              
+  }
+}
+
+.slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 35px;              
+  height: 23px;              
+  background-color: var(--border); 
+  border-radius: 9999px;     
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+  z-index: 1;                
 }
