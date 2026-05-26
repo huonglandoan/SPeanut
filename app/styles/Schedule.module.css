@@ -1,0 +1,127 @@
+.overlay {
+  position: fixed !important; /* Thêm !important để ép trình duyệt đè mọi thuộc tính khác */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 99999 !important; /* Cho số thật lớn để chắc chắn đè lên Bottom Bar */
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* Khối nội dung chính của Popup (Bottom Sheet) */
+.popupSheet {
+  background-color: #ffffff;
+  width: 100%;
+  max-width: 600px; /* Giới hạn chiều rộng khi xem trên máy tính */
+  max-height: 85vh; /* Chiều cao tối đa bằng 85% màn hình */
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto; /* Tự động hiện thanh cuộn nếu nội dung form quá dài */
+  
+  /* Hiệu ứng trượt mượt mà từ dưới lên khi xuất hiện */
+  animation: slideUp 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* Thanh nắm kéo giả lập trên đầu popup (Tăng trải nghiệm App di động) */
+.dragHandle {
+  width: 40px;
+  height: 5px;
+  background-color: #e0e0e0;
+  border-radius: 3px;
+  margin: -8px auto 16px auto;
+}
+
+/* Header của trang quản lý lịch */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.headerTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.headerSub {
+  font-size: 13px;
+  color: #666666;
+  margin: 4px 0 0 0;
+}
+
+/* Nút đóng hình chữ X */
+.closeBtn {
+  border: none;
+  background: #f5f5f5;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.closeBtn:hover {
+  background: #e0e0e0;
+}
+
+/* Khu vực nội dung/Form bên trong */
+.contentBox {
+  background-color: #f9f9f9;
+  border: 1px dashed #cccccc;
+  border-radius: 16px;
+  padding: 30px 20px;
+  text-align: center;
+  color: #888888;
+  font-style: italic;
+  font-size: 14px;
+}
+
+/* Định nghĩa hiệu ứng chuyển động Keyframes */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Tích hợp Dark Mode nếu hệ thống bật */
+:global(.dark) .popupSheet {
+  background-color: #1f1f1f;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+}
+
+:global(.dark) .headerTitle {
+  color: #ffffff;
+}
+
+:global(.dark) .headerSub {
+  color: #aaaaaa;
+}
+
+:global(.dark) .closeBtn {
+  background: #2a2a2a;
+  color: #fff;
+}
+
+:global(.dark) .contentBox {
+  background-color: #141414;
+  border-color: #333333;
+  color: #666666;
+}

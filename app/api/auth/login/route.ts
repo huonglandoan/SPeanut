@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      session: data.session, // trả về session thành công 
+      session: data.session, 
       user: data.user,
     });
   } catch (err: any) {
