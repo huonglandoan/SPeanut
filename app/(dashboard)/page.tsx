@@ -3,17 +3,17 @@ import {useState, useEffect} from 'react'
 //import {useRouter} from 'next/navigation'
 import {supabase} from '@/lib/supabase'
 import styles from '../styles/Dashboard.module.css'
-import Scheduler from './schedule'
+import Scheduler from './class'
 import CalendarView from './calendar'
 
 import {
-  Sun, Moon, Plus, Calendar, Clock, Bell, User,
-  ChevronLeft, ChevronRight,
+  Plus, Calendar, Wallet, BookOpen, User,
+  Heart
 } from "lucide-react";
 
 
-const NAV_ICONS = [Calendar, Clock, Bell, User];
-const NAV_LABELS = ["Calendar", "Schedule", "Notifications", "Profile"];
+const NAV_ICONS = [BookOpen,Calendar, Wallet, User];
+const NAV_LABELS = ["Class", "Calendar", "Notifications", "Profile"];
 
 export default function DashboardPage(){
   const [year, setYear] = useState(2026)
@@ -65,7 +65,7 @@ export default function DashboardPage(){
 {renderContent()}
     <div className={styles.bottomShell}>
       <button className={styles.fab} aria-label="Add event">
-        <Plus />
+        <Heart />
       </button>
 
       <nav className={styles.bottomBar} aria-label="Main navigation">

@@ -1,0 +1,232 @@
+.Card {
+  width: 400px;
+  margin: 80px auto; 
+  padding: 40px 30px;
+  background-color: var(--bg-card);
+  box-sizing: border-box;
+  border-radius: 20px; 
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); 
+}
+
+.Title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-title);
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 40px;
+}
+
+.fieldPanel {
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.fieldInput {
+  width: 100%;
+  padding: 14px 24px;        
+  border-radius: 9999px;     
+  border: 1.5px solid var(--border);
+  background-color: var(--bg-input);
+  color: var(--text-title);
+  font-size: 0.95rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* Tác động vào nút bấm LOGIN */
+.buttonPrimary {
+  display: block;
+  width: 50%;               
+  margin: 35px auto 0 auto;
+  padding: 12px 0;
+  border: none;
+  border-radius: 9999px;     
+  background-color: var(--primary);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-align: center;
+}
+
+.fieldInput::placeholder {
+  color: var(--text-main);
+}
+
+.buttonPrimary {
+  display: block;
+  width: 80%;              
+  margin: 50px auto 0 auto;  
+  padding: 12px 0;
+  border: none;
+  border-radius: 9999px;    
+  background-color: var(--btn-main);
+  color: var(--text-btn);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase; 
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.buttonPrimary:disabled {
+  opacity: 0.5;
+}
+
+@media (max-width: 480px) {
+  .authCard {
+    padding: 30px 20px;      
+    box-shadow: none;        
+  }
+
+  .authTitle {
+    font-size: 2.1rem;       
+    margin-bottom: 25px;
+  }
+  
+  .actionGroup {
+    margin-top: 25px;
+    gap: 10px;              
+  }
+}
+
+/* Khung chứa 7 nút thứ */
+.weekGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px; /* Tăng khoảng cách một chút cho thoáng */
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* Nút Thứ mặc định (Chưa chọn) */
+.dayBtn {
+  background-color: var(--bg-input); /* Ăn theo màu nền input tròn của bạn */
+  border: 1.5px solid var(--border);
+  color: var(--text-title);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 12px 0;
+  border-radius: 14px; /* Bo góc mềm mại vừa phải (hoặc dùng 9999px nếu bạn thích full tròn như viên thuốc) */
+  cursor: pointer;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Hiệu ứng đổi màu mượt mà */
+}
+
+/* Hiệu ứng khi di chuột qua (Hover) */
+.dayBtn:hover:not(:disabled) {
+  border-color: var(--primary);
+  background-color: var(--bg-card);
+  transform: translateY(-1px); /* Nhấc nhẹ nút lên tạo cảm giác nổi */
+}
+
+/* Hiệu ứng khi bấm giữ (Active click) */
+.dayBtn:active:not(:disabled) {
+  transform: scale(0.95); /* Co nhỏ lại một chút giống nút linkInline của bạn */
+}
+
+/* Nút Thứ ĐÃ ĐƯỢC TÍCH CHỌN */
+.dayBtnActive {
+  background-color: var(--btn-main) !important; /* Lấy màu nút chính login */
+  border-color: var(--btn-main) !important;
+  color: var(--text-btn) !important; /* Màu chữ tương phản */
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12); /* Đổ bóng nhẹ cho nút nổi bật hẳn lên */
+  transform: translateY(-1px);
+}
+
+/* Trạng thái khi form đang loading */
+.dayBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Khung chứa danh sách lớp */
+.classList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 500px; /* Bằng chiều rộng với ô Card form ở dưới */
+  margin: 0 auto 40px auto; /* Cách cái form bên dưới 40px */
+}
+
+/* Card của từng lớp */
+.classItemCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  background-color: var(--bg-card);
+  border-radius: 20px; /* Bo góc 20px đồng bộ với Card form */
+  border: 1.5px solid var(--border);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.classItemCard:hover {
+  border-color: var(--btn-main);
+  transform: translateY(-2px); /* Di chuột vào thì nổi nhẹ lên */
+}
+
+/* Phần thông tin chữ bên trái */
+.classMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.classNameText {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-title);
+  margin: 0;
+}
+
+.classSubText {
+  font-size: 0.85rem;
+  color: var(--text-main);
+  opacity: 0.8;
+}
+
+/* Phần tiền và nút bấm bên phải */
+.classRightSide {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.classRateText {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--btn-main); /* Nổi bật số tiền lên */
+  text-align: right;
+}
+
+/* Cụm nút hành động Sửa / Xóa */
+.actionButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.miniActionBtn {
+  background: none;
+  border: 1.5px solid var(--border);
+  color: var(--text-title);
+  padding: 8px;
+  border-radius: 9999px; /* Nút tròn xoe xinh xắn */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.miniActionBtn:hover {
+  background-color: var(--bg-input);
+  border-color: var(--text-title);
+}

@@ -39,7 +39,7 @@ export async function RegisterWithAPI({email, password, fullName} : RegisterPara
         id: data.user.id,
         email,
         name: fullName,
-        role: 'user', // Mặc định là user thường
+        role: 'user', 
       },
     ]);
     
