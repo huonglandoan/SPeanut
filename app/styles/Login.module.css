@@ -1,14 +1,15 @@
-.classCard {
-  width: 400px;
-  margin: 80px auto; 
+.authCard {
+  width: 100%;
+  max-width: 400px;          /* Tự động co giãn trên điện thoại, tối đa 400px trên laptop */
   padding: 40px 30px;
   background-color: var(--bg-card);
-  box-sizing: border-box;
   border-radius: 20px; 
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); 
+  box-sizing: border-box;
+  transition: background-color 0.35s ease, box-shadow 0.35s ease;
 }
 
-.Title {
+.authTitle {
   font-size: 2.5rem;
   font-weight: 700;
   color: var(--text-title);

@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/supabase'
 
-// Interface đại diện cho cấu trúc 1 hàng (row) trong Database Supabase của bạn
 export interface ClassScheduleRow {
   id?: number;
   name: string;
@@ -12,7 +11,6 @@ export interface ClassScheduleRow {
   created_at?: string;
 }
 
-// Interface định dạng dữ liệu rút gọn trả về cho danh sách lớp (Gom nhóm)
 export interface ClassList {
   name: string;
   short_name: string;
@@ -21,8 +19,6 @@ export interface ClassList {
   end_time: string;
   rate_per_session: number;
 }
-
-// Interface định dạng dữ liệu trả về cho Calendar
 export interface CalendarEvent {
   title: string;
   shortName: string;
@@ -143,9 +139,6 @@ export async function updateClass(id: number, updatedData: Partial<ClassSchedule
   return data;
 }
 
-/**
- * HÀM 5: Xóa lớp học
- */
 export async function deleteClass(id: number) {
   const { error } = await supabase
     .from('class_schedules')

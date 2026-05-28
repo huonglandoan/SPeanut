@@ -5,7 +5,7 @@
    ========================================== */
 .authCard {
   width: 100%;
-  max-width: 400px;          /* Tự động co giãn trên điện thoại, tối đa 400px trên laptop */
+  max-width: 400px;          
   padding: 40px 30px;
   background-color: var(--bg-card);
   border-radius: 20px; 
