@@ -30,17 +30,18 @@ export default function DashboardPage(){
       case 0:
         return <Scheduler />
       case 1:
-        <div>Màn hình Thông báo (Đang phát triển)</div>
-      case 2:
-        return <div>Màn hình Thông báo (Đang phát triển)</div>
-      case 3:
-        return <CalendarView
+        return <CalendarView 
             year={year} 
             setYear={setYear}
             month={month} 
             setMonth={setMonth} 
             selected={selected} 
             setSelected={setSelected} />
+      case 2:
+        return <div>Màn hình Thông báo (Đang phát triển)</div>
+      case 3:
+        return <div>Màn hình Thông báo (Đang phát triển)</div>
+        
       default:
         return <div>Màn hình Thông báo (Đang phát triển)</div>
     }

@@ -1,150 +1,164 @@
-import { supabase } from '@/lib/supabase'
-
-export interface ClassScheduleRow {
-  id?: number;
+import { supabase } from '@/lib/supabase';
+// Danh sách các lớp cố định
+export interface GroupedClassDisplay {
+  id: number;
   name: string;
   short_name: string;
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
   rate_per_session: number;
-  created_at?: string;
+  type: 'FIXED' | 'EXTRA';
+  days?: string[]; 
+  start_time?: string;
+  end_time?: string;
+  valid_from?: string;
 }
-
-export interface ClassList {
+// Form tạo lớp mới
+export interface CreateClassInput {
   name: string;
   short_name: string;
-  days: string[];
+  rate_per_session: number;
+  type: 'FIXED' | 'EXTRA';
+  selectedDays: number[];
   start_time: string;
   end_time: string;
-  rate_per_session: number;
+  valid_from: string;
 }
-export interface CalendarEvent {
-  title: string;
-  shortName: string;
-  start: string; // Định dạng ISO String "YYYY-MM-DDTHH:mm:ss"
-  end: string;
-  rate: number;
+// Form thay đổi thông tin lớp
+export interface ChangeScheduleInput {
+  classId: number;
+  editSelectedDays: number[];
+  editValidFrom: string;
+  editStartTime: string;
+  editEndTime: string;
 }
+// Các thứ trong tuần
+const daysOfWeekLabels = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
-/**
- * HÀM 1: Lấy danh sách lớp và gộp các buổi học lại
- * Trả về dạng: Next.js (T2, T4, T6)
- */
-export async function getClassList(): Promise<ClassList[]> {
-  const { data, error: supabaseError } = await supabase
-    .from('class_schedules') 
-    .select('*')
-    .order('day_of_week', { ascending: true }); 
+export const ClassService = {
+    /**
+    * 1. Lấy danh sách toàn bộ lớp học và map với bảng lịch trình (class_schedules)
+    */
+    async fetchClasses(): Promise<GroupedClassDisplay[]> {
+    const { data: classesData, error: classErr } = await supabase
+      .from('classes')
+      .select('*')
+      .order('id', { ascending: false });
 
-  // Đã sửa: Check đúng biến lỗi của Supabase trả về
-  if (supabaseError) throw supabaseError;
-  if (!data) return [];
+    if (classErr) throw classErr;
+    if (!classesData) return [];
 
-  const daysLabels = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
-  const map = new Map<string, ClassList>();
+    const { data: schedulesData, error: scheduleErr } = await supabase
+      .from('class_schedules')
+      .select('*')
+      .is('valid_to', null);
 
-  data.forEach((item) => {
-    const key = item.short_name; 
-    if (!map.has(key)) {
-      map.set(key, {
-        name: item.name,
-        short_name: item.short_name,
-        days: [daysLabels[item.day_of_week]],
-        start_time: item.start_time,
-        end_time: item.end_time,
-        rate_per_session: item.rate_per_session
-      });
-    } else {
-      const existing = map.get(key)!;
-      if (!existing.days.includes(daysLabels[item.day_of_week])) {
-        existing.days.push(daysLabels[item.day_of_week]);
+    if (scheduleErr) throw scheduleErr;
+
+    return classesData.map((cls) => {
+      if (cls.type === 'EXTRA') {
+        return { 
+          id: cls.id, 
+          name: cls.name, 
+          short_name: cls.short_name, 
+          rate_per_session: cls.rate_per_session, 
+          type: 'EXTRA' 
+        };
       }
+      const classSchedules = (schedulesData || []).filter(s => s.class_id === cls.id);
+      const days = classSchedules.map(s => daysOfWeekLabels[s.day_of_week]);
+      
+      return {
+        id: cls.id,
+        name: cls.name,
+        short_name: cls.short_name,
+        rate_per_session: cls.rate_per_session,
+        type: 'FIXED',
+        days: days,
+        start_time: classSchedules[0]?.start_time?.slice(0, 5) || '18:00',
+        end_time: classSchedules[0]?.end_time?.slice(0, 5) || '20:00',
+        valid_from: classSchedules[0]?.valid_from
+      };
+    });
+  },
+  /**
+   * 2. Tạo mới một lớp học (Kèm thêm lịch cố định tự động vào bảng class_schedules nếu type = FIXED)
+   */
+  async createClass(input: CreateClassInput): Promise<void> {
+    const mockUserId = 'b66ddf15-f7bb-4db1-a016-9bea0f6587a4'; // ID giả lập từ logic cũ của bạn
+    
+    const { data: newClass, error: classError } = await supabase
+      .from('classes')
+      .insert({ 
+        user_id: mockUserId, 
+        name: input.name.trim(), 
+        short_name: input.short_name.trim().toUpperCase(), 
+        rate_per_session: Number(input.rate_per_session), 
+        type: input.type 
+      })
+      .select()
+      .single();
+
+    if (classError) throw classError;
+
+    if (input.type === 'FIXED' && newClass) {
+      const rowsToInsert = input.selectedDays.map((day) => ({ 
+        class_id: newClass.id, 
+        day_of_week: day, 
+        start_time: input.start_time, 
+        end_time: input.end_time, 
+        valid_from: input.valid_from, 
+        valid_to: null 
+      }));
+
+      const { error: scheduleError } = await supabase
+        .from('class_schedules')
+        .insert(rowsToInsert);
+
+      if (scheduleError) throw scheduleError;
     }
-  });
-  
-  return Array.from(map.values());
-}
+  },
+  /**
+   * 3. Thay đổi lịch dạy của lớp FIXED học ngầm (Đóng lịch cũ bằng valid_to và Insert loạt lịch mới)
+   */
+  async changeSchedule(input: ChangeScheduleInput): Promise<void> {
+    const { classId, editSelectedDays, editValidFrom, editStartTime, editEndTime } = input;
 
-/**
- * HÀM 2: Bung lịch tự động từ cấu hình cố định theo khoảng thời gian
- */
-export async function getCalendarEventsService(startDate: string, endDate: string): Promise<CalendarEvent[]> {
-  const { data: schedules, error: supabaseError } = await supabase
-    .from('class_schedules')
-    .select('*');
+    const previousDate = new Date(editValidFrom);
+    previousDate.setDate(previousDate.getDate() - 1);
+    const validToValue = previousDate.toISOString().split('T')[0];
 
-  if (supabaseError) throw supabaseError;
-  if (!schedules) return [];
+    // Đóng hiệu lực lịch cũ
+    const { error: closeError } = await supabase
+      .from('class_schedules')
+      .update({ valid_to: validToValue })
+      .eq('class_id', classId)
+      .is('valid_to', null);
 
-  const events: CalendarEvent[] = [];
-  const startPeriod = new Date(startDate);
-  const endPeriod = new Date(endDate);
+    if (closeError) throw closeError;
 
-  let currentLoopDate = new Date(startPeriod);
-  while (currentLoopDate <= endPeriod) {
-    const currentDayOfWeek = currentLoopDate.getDay(); 
+    // Chuẩn bị các bản ghi lịch trình mới để đưa vào database
+    const newSchedules = editSelectedDays.map(day => ({
+      class_id: classId,
+      day_of_week: day,
+      start_time: editStartTime,
+      end_time: editEndTime,
+      valid_from: editValidFrom,
+      valid_to: null
+    }));
+    const { error: insertError } = await supabase
+      .from('class_schedules')
+      .insert(newSchedules);
 
-    const activeSchedules = schedules.filter(s => s.day_of_week === currentDayOfWeek);
+    if (insertError) throw insertError;
+  },
+  /**
+   * 4. Xóa hoàn toàn một lớp học dựa trên Class ID
+   */
+  async deleteClass(classId: number): Promise<void> {
+    const { error } = await supabase
+      .from('classes')
+      .delete()
+      .eq('id', classId);
 
-    for (const schedule of activeSchedules) {
-      const [startHour, startMin] = schedule.start_time.split(":").map(Number);
-      const [endHour, endMin] = schedule.end_time.split(":").map(Number);
-
-      const eventStart = new Date(currentLoopDate);
-      eventStart.setHours(startHour, startMin, 0, 0);
-
-      const eventEnd = new Date(currentLoopDate);
-      eventEnd.setHours(endHour, endMin, 0, 0);
-
-      events.push({
-        title: schedule.name,
-        shortName: schedule.short_name,
-        start: eventStart.toISOString(), 
-        end: eventEnd.toISOString(),
-        rate: schedule.rate_per_session
-      });
-    }
-
-    currentLoopDate.setDate(currentLoopDate.getDate() + 1);
+    if (error) throw error;
   }
-
-  return events.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
-}
-
-/**
- * HÀM 3: Thêm mảng các lớp học mới
- */
-export async function createClasses(rows: ClassScheduleRow[]) {
-  const { data, error } = await supabase
-    .from('class_schedules')
-    .insert(rows)
-    .select();
-
-  if (error) throw error;
-  return data;
-}
-
-/**
- * HÀM 4: Cập nhật thông tin một lớp học cũ bằng ID
- */
-export async function updateClass(id: number, updatedData: Partial<ClassScheduleRow>) {
-  const { data, error } = await supabase
-    .from('class_schedules')
-    .update(updatedData)
-    .eq('id', id)
-    .select();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function deleteClass(id: number) {
-  const { error } = await supabase
-    .from('class_schedules')
-    .delete()
-    .eq('id', id);
-
-  if (error) throw error;
-  return true;
-}
+};

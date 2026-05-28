@@ -36,21 +36,6 @@
   box-sizing: border-box;
 }
 
-/* Tác động vào nút bấm LOGIN */
-.buttonPrimary {
-  display: block;
-  width: 50%;               
-  margin: 35px auto 0 auto;
-  padding: 12px 0;
-  border: none;
-  border-radius: 9999px;     
-  background-color: var(--primary);
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  text-align: center;
-}
 
 .fieldInput::placeholder {
   color: var(--text-main);
