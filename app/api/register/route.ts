@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! 
+  'https://pnsuumytsxszeberladw.supabase.co', 
+  'sb_publishable_rkd_TagfjTnUVgAdP_eofA_LHTKt3Ra'
 );
 
 export async function POST(request: Request) {
