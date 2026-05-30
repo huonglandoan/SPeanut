@@ -5,9 +5,9 @@ interface LoginParams{
 }
 
 export async function LoginWithAPI({email, password}:LoginParams) {
-    console.log('Calling API /api/auth/login', {email});
+    console.log('Calling API /api/login', {email});
 
-    const response = await fetch('api/auth/login',{
+    const response = await fetch('api/login',{
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -38,8 +38,7 @@ export async function RegisterWithAPI({email, password, fullName} : RegisterPara
       {
         id: data.user.id,
         email,
-        name: fullName,
-        role: 'user', 
+        full_name: fullName,
       },
     ]);
     
