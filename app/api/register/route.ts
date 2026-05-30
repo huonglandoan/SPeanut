@@ -33,6 +33,7 @@ export async function POST(request: Request) {
     const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
       email,
       password,
+      
     });
 
     if (authError) {
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
           { 
             id: authData.user.id,
             email: email,
-            fulll_name: name,
+            full_name: name,
           }
         ]);
 
