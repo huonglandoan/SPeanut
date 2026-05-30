@@ -35,28 +35,19 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      // Gọi services
-      const data = await LoginWithAPI({ email, password });
+      // 1. Gọi service đăng nhập thẳng qua Supabase Client
+      await LoginWithAPI({ email, password });
       
-      // Nhận kết quả
-      const { session } = data;
-      const { error: setSessionError } = await supabase.auth.setSession(session);
-      
-      if (setSessionError) {
-        setError(setSessionError.message);
-        return;
-      }
-
       setSuccess('Đăng nhập thành công!');
 
-      // Chuyển user đến trang chính
+      // 2. Chuyển user thẳng tiến vào trang Dashboard hưởng thành quả
       router.push('/');
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }; // <--- Đóng ngoặc hàm handleSubmit ở đây (Chuẩn)
+  };
 
 return (
   <div className={styles.authCard}>

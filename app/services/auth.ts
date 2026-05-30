@@ -4,22 +4,21 @@ interface LoginParams{
     password: string,    
 }
 
-export async function LoginWithAPI({email, password}:LoginParams) {
-    console.log('Calling API /api/login', {email});
+export async function LoginWithAPI({ email, password }: LoginParams) {
+  console.log('[Service] Đang xử lý đăng nhập thẳng qua Supabase cho:', email);
+  
+  // Gọi trực tiếp Supabase từ Frontend Client
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-    const response = await fetch('api/login',{
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-    });
+  if (error) {
+    throw new Error(error.message);
+  }
 
-    const data = await response.json();
-    console.log('Login API respon', data);
-
-    if(!response.ok || data.error){
-        throw new Error(data.error || 'Đăng nhập thất bại');
-    }
-    return data;
+  // Trả về data (đã bao gồm session và user mà Supabase tự động thiết lập)
+  return data;
 }
 
 interface RegisterParam{
