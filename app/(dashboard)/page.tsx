@@ -29,7 +29,6 @@ export default function DashboardPage() {
         // 2. Không có session -> Đẩy người dùng về trang /login ngay
         router.push('/login')
       } else {
-        // Có session -> Tắt loading để hiện giao diện Dashboard
         setLoading(false)
       }
     }

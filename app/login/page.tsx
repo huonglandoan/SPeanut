@@ -60,7 +60,7 @@ return (
     <button type="button" className={styles.switchBtn} onClick={() => handleToggleTheme('dark')}>🌙</button>
   </div>
 
-  {/* 2. Tiêu đề Register */}
+  {/* 2. Tiêu đề Login */}
 
     <p className={styles.authTitle}>Login</p>
 
@@ -77,7 +77,7 @@ return (
         />
       </div>
 
-      {/* Ô nhập Password: ĐÃ XÓA CHỮ PASSWORD Ở TRÊN, thay bằng placeholder="Password" */}
+      {/* Ô nhập Password */}
       <div className={styles.fieldPanel}>
         <input
           type="password"

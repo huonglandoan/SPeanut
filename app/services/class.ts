@@ -1,5 +1,7 @@
-import { supabase } from '@/lib/supabase';
-// Danh sách các lớp cố định
+// services/class.ts
+import { createClient } from '@/lib/server'; // [THAY ĐỔI QUAN TRỌNG]: Đổi từ lib/supabase sang lib/server
+
+// Danh sách các lớp cố định hiển thị ở FE
 export interface GroupedClassDisplay {
   id: number;
   name: string;
@@ -11,8 +13,10 @@ export interface GroupedClassDisplay {
   end_time?: string;
   valid_from?: string;
 }
+
 // Form tạo lớp mới
 export interface CreateClassInput {
+  userId: string; 
   name: string;
   short_name: string;
   rate_per_session: number;
@@ -22,29 +26,35 @@ export interface CreateClassInput {
   end_time: string;
   valid_from: string;
 }
+
 // Form thay đổi thông tin lớp
 export interface ChangeScheduleInput {
   classId: number;
+  userId: string; 
   editSelectedDays: number[];
   editValidFrom: string;
   editStartTime: string;
   editEndTime: string;
 }
+
 // Các thứ trong tuần
 const daysOfWeekLabels = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
 export const ClassService = {
-    /**
-    * 1. Lấy danh sách toàn bộ lớp học và map với bảng lịch trình (class_schedules)
-    */
-    async fetchClasses(): Promise<GroupedClassDisplay[]> {
+  /**
+   * 1. Lấy danh sách toàn bộ lớp học của ĐÚNG user đang đăng nhập
+   */
+  async fetchClasses(userId: string): Promise<GroupedClassDisplay[]> {
+    const supabase = await createClient(); // Khởi tạo Server Client có kèm Cookie
+
     const { data: classesData, error: classErr } = await supabase
       .from('classes')
       .select('*')
+      .eq('user_id', userId) 
       .order('id', { ascending: false });
 
     if (classErr) throw classErr;
-    if (!classesData) return [];
+    if (!classesData || classesData.length === 0) return [];
 
     const { data: schedulesData, error: scheduleErr } = await supabase
       .from('class_schedules')
@@ -79,16 +89,17 @@ export const ClassService = {
       };
     });
   },
+
   /**
-   * 2. Tạo mới một lớp học (Kèm thêm lịch cố định tự động vào bảng class_schedules nếu type = FIXED)
+   * 2. Tạo mới một lớp học
    */
   async createClass(input: CreateClassInput): Promise<void> {
-    const mockUserId = 'b66ddf15-f7bb-4db1-a016-9bea0f6587a4'; // ID giả lập từ logic cũ của bạn
-    
+    const supabase = await createClient(); // Khởi tạo Server Client
+
     const { data: newClass, error: classError } = await supabase
       .from('classes')
       .insert({ 
-        user_id: mockUserId, 
+        user_id: input.userId, 
         name: input.name.trim(), 
         short_name: input.short_name.trim().toUpperCase(), 
         rate_per_session: Number(input.rate_per_session), 
@@ -116,11 +127,25 @@ export const ClassService = {
       if (scheduleError) throw scheduleError;
     }
   },
+
   /**
-   * 3. Thay đổi lịch dạy của lớp FIXED học ngầm (Đóng lịch cũ bằng valid_to và Insert loạt lịch mới)
+   * 3. Thay đổi lịch dạy của lớp FIXED
    */
   async changeSchedule(input: ChangeScheduleInput): Promise<void> {
-    const { classId, editSelectedDays, editValidFrom, editStartTime, editEndTime } = input;
+    const supabase = await createClient(); // Khởi tạo Server Client
+    const { classId, userId, editSelectedDays, editValidFrom, editStartTime, editEndTime } = input;
+
+    // Bước kiểm tra an toàn danh tính chủ sở hữu
+    const { data: checkOwner, error: checkError } = await supabase
+      .from('classes')
+      .select('id')
+      .eq('id', classId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (checkError || !checkOwner) {
+      throw new Error("Bạn không có quyền thay đổi lịch của lớp học này!");
+    }
 
     const previousDate = new Date(editValidFrom);
     previousDate.setDate(previousDate.getDate() - 1);
@@ -144,20 +169,25 @@ export const ClassService = {
       valid_from: editValidFrom,
       valid_to: null
     }));
+
     const { error: insertError } = await supabase
       .from('class_schedules')
       .insert(newSchedules);
 
     if (insertError) throw insertError;
   },
+
   /**
-   * 4. Xóa hoàn toàn một lớp học dựa trên Class ID
+   * 4. Xóa hoàn toàn một lớp học dựa trên Class ID và User ID
    */
-  async deleteClass(classId: number): Promise<void> {
+  async deleteClass(classId: number, userId: string): Promise<void> {
+    const supabase = await createClient(); // Khởi tạo Server Client
+
     const { error } = await supabase
       .from('classes')
       .delete()
-      .eq('id', classId);
+      .eq('id', classId)
+      .eq('user_id', userId);
 
     if (error) throw error;
   }

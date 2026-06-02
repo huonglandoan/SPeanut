@@ -1,11 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// Khởi tạo Supabase Admin Client
-const supabaseAdmin = createClient(
-  'https://pnsuumytsxszeberladw.supabase.co', 
-  'sb_publishable_rkd_TagfjTnUVgAdP_eofA_LHTKt3Ra'
-);
+import { createClient } from '@/lib/server'; // [QUAN TRỌNG] Dùng Server Client để đồng bộ Cookie
 
 export async function POST(request: Request) {
   try { 
@@ -19,8 +13,11 @@ export async function POST(request: Request) {
       );
     }
 
+    // Khởi tạo Server Client phục vụ cho cả việc check DB và Auth
+    const supabaseServer = await createClient();
+
     // 2. Kiểm tra giới hạn 500 người dùng hệ thống
-    const { count, error: countError } = await supabaseAdmin
+    const { count, error: countError } = await supabaseServer
       .from('users')
       .select('*', { count: 'exact', head: true });
 
@@ -35,8 +32,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // 3. Tiến hành đăng ký tài khoản Auth trên Supabase
-    const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
+    // 3. Tiến hành đăng ký tài khoản Auth trên Supabase thông qua Server Client
+    const { data: authData, error: authError } = await supabaseServer.auth.signUp({
       email,
       password,
     });
@@ -50,14 +47,13 @@ export async function POST(request: Request) {
 
     // 4. Nếu tạo Auth thành công, chèn dữ liệu đồng bộ vào bảng public.users
     if (authData.user) {
-      const { error: insertError } = await supabaseAdmin
+      const { error: insertError } = await supabaseServer
         .from('users')
         .insert([
           { 
             id: authData.user.id,
             email: email,
-            name: name,       // Chèn dữ liệu vào cột 'name' mới thêm trên Schema của bạn
-            full_name: name,  // Sửa lỗi chính tả 'fulll_name' cũ và chèn vào cột 'full_name'
+            full_name: name, // Chèn vào đúng cột full_name tương thích với cấu trúc DB.png của bạn
           }
         ]);
 
@@ -75,6 +71,7 @@ export async function POST(request: Request) {
     );
 
   } catch (err: any) {
+    console.error("Lỗi hệ thống tại API Register:", err);
     return NextResponse.json(
       { error: `Lỗi hệ thống: ${err.message}` },
       { status: 500 } 

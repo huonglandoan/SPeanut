@@ -1,49 +1,60 @@
-import { supabase } from '@/lib/supabase';
-interface LoginParams{
-    email: string,
-    password: string,    
+// services/auth.ts
+
+interface LoginParams {
+  email: string;
+  password: string;    
 }
 
+/**
+ * 1. Xử lý gửi yêu cầu đăng nhập lên API Route Server
+ */
 export async function LoginWithAPI({ email, password }: LoginParams) {
-  console.log('[Service] Đang xử lý đăng nhập thẳng qua Supabase cho:', email);
+  console.log('[Service] Đang gửi yêu cầu đăng nhập lên API cho:', email);
   
-  // Gọi trực tiếp Supabase từ Frontend Client
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
+  const response = await fetch('/api/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
   });
 
-  if (error) {
-    throw new Error(error.message);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Đăng nhập không thành công.');
   }
 
-  // Trả về data (đã bao gồm session và user mà Supabase tự động thiết lập)
+  // Trả về dữ liệu (chứa thông tin user) để Frontend xử lý nếu cần
   return data;
 }
 
-interface RegisterParam{
-    email: string,
-    password: string,
-    fullName: string
+interface RegisterParam {
+  email: string;
+  password: string;
+  fullName: string;
 }
 
-export async function RegisterWithAPI({email, password, fullName} : RegisterParam){
-    console.log('[Service] Đang xử lý đăng ký tài khoản cho:', email);
-    const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
-    if (signUpError) throw new Error(signUpError.message);
+/**
+ * 2. Xử lý gửi yêu cầu đăng ký lên API Route Server
+ */
+export async function RegisterWithAPI({ email, password, fullName }: RegisterParam) {
+  console.log('[Service] Đang gửi yêu cầu đăng ký tài khoản lên API cho:', email);
+  
+  const response = await fetch('/api/register', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    // Gửi đúng trường 'name' theo yêu cầu payload của api/register/route.ts
+    body: JSON.stringify({ email, password, name: fullName }), 
+  });
 
-    if (data.user) {
-    const { error: insertError } = await supabase.from('users').insert([
-      {
-        id: data.user.id,
-        email,
-        full_name: fullName,
-      },
-    ]);
-    
-    if (insertError) throw new Error(insertError.message);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Đăng ký tài khoản không thành công.');
   }
 
   return data;
 }
-
