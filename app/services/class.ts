@@ -62,7 +62,7 @@ export const ClassService = {
 
     if (scheduleErr) throw scheduleErr;
 
-    return classesData.map((cls) => {
+    return classesData.map((cls:{id: string; type: string; [key: string]: any}) => {
       if (cls.type === 'EXTRA') {
         return { 
           id: cls.id, 
@@ -72,8 +72,8 @@ export const ClassService = {
           type: 'EXTRA' 
         };
       }
-      const classSchedules = (schedulesData || []).filter(s => s.class_id === cls.id);
-      const days = classSchedules.map(s => daysOfWeekLabels[s.day_of_week]);
+      const classSchedules = (schedulesData || []).filter((s: any) => s.class_id === cls.id);
+      const days = classSchedules.map((s: any) => daysOfWeekLabels[s.day_of_week]);
       
       return {
         id: cls.id,
