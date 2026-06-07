@@ -1,4 +1,5 @@
 'use client'
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -10,7 +11,7 @@ import { BookOpen, Calendar, Wallet, User, Heart } from "lucide-react";
 
 const NAV_ICONS = [BookOpen, Calendar, Wallet, User];
 const NAV_LABELS = ["Class", "Calendar", "Notifications", "Profile"];
-
+export const dynamic = 'force-dynamic';
 export default function DashboardPage() {
   const [year, setYear] = useState(2026)
   const [month, setMonth] = useState(4)
