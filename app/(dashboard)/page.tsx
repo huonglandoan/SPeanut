@@ -37,7 +37,7 @@ export default function DashboardPage() {
     checkAuth()
 
     // Lắng nghe trạng thái đăng xuất đột ngột
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       if (!session) router.push('/login')
     })
 
