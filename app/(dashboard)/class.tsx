@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from '../styles/Class.module.css';
 import { GroupedClassDisplay } from '../services/class' 
+import { Trash2, SquarePen , Settings} from 'lucide-react';
 
 export default function FixedClassForm() {
   // --- CHUYỂN TAB TRÊN DI ĐỘNG ---
@@ -154,7 +155,7 @@ export default function FixedClassForm() {
           onClick={() => { setActiveTab('CREATE'); setError(null); setSuccess(null); }}
           className={activeTab === 'CREATE' ? styles.dayBtnActive : styles.dayBtn}
         >
-          ➕ Tạo lớp mới
+          Tạo lớp mới
         </button>
       </div>
 
@@ -191,7 +192,7 @@ export default function FixedClassForm() {
                   </h3>
                   <p className={styles.classSubText}>
                     {cls.type === 'FIXED' ? (
-                      <>Thứ: {cls.days?.join(', ')} • Từ {cls.valid_from?.split('-').reverse().join('/')}</>
+                      <>Thứ: {cls.days?.join(', ')}  từ {cls.valid_from?.split('-').reverse().join('/')}</>
                     ) : (
                       <>Thiết lập trực tiếp từng buổi trên Lịch Tháng</>
                     )}
@@ -206,16 +207,16 @@ export default function FixedClassForm() {
                 </div>
                 <div className={styles.actionButtons}>
                   {cls.type === 'FIXED' && (
-                    <button type="button" title="Đổi lịch" onClick={() => handleOpenChangeScheduleForm(cls)} className={styles.miniActionBtnMini}>🔄</button>
+                    <button type="button" title="Đổi lịch" onClick={() => handleOpenChangeScheduleForm(cls)} className={styles.miniActionBtnMini}><SquarePen size={16}/></button>
                   )}
-                  <button type="button" title="Xóa lớp" onClick={() => handleDeleteClick(cls.id)} className={styles.miniActionBtnMini} disabled={loading}>🗑️</button>
+                  <button type="button" title="Xóa lớp" onClick={() => handleDeleteClick(cls.id)} className={styles.miniActionBtnMini} disabled={loading}><Trash2 size={16} /></button>
                 </div>
               </div>
 
               {/* KHUNG ĐỔI LỊCH DẠY (BUNG NỞ INLINE) */}
               {changingScheduleClassId === cls.id && (
                 <div className={styles.inlineEditPanel} style={{ width: '100%', gridColumn: '1 / -1', marginTop: '10px' }}>
-                  <p className={styles.editPanelTitle}>⚙️ Đổi lịch mới:</p>
+                  <p className={styles.editPanelTitle}>< Settings size={16}/> Đổi lịch mới:</p>
                   <div className={styles.fieldRow} style={{ display: 'flex', gap: '8px' }}>
                     <div style={{ flex: 1 }}>
                       <input type="time" className={styles.fieldInput} value={editStartTime} onChange={(e) => setEditStartTime(e.target.value)} />
@@ -250,52 +251,94 @@ export default function FixedClassForm() {
         </div>
       )}
 
-      {/* ================= TAB 2: FORM TẠO MỚI TRÒN TRỊA ================= */}
+      {/* ================= TAB 2: FORM TẠO MỚI  ================= */}
       {activeTab === 'CREATE' && (
         <form onSubmit={handleSubmit} className={styles.formScrollable}>
+          {/* CHỌN LOẠI LỚP HỌC */}
           <div className={styles.fieldPanel}>
-            <div style={{ display: 'flex', gap: '8px', backgroundColor: 'var(--bg-input)', padding: '4px', borderRadius: '9999px' }}>
-              <button type="button" className={classType === 'FIXED' ? styles.dayBtnActive : styles.dayBtn} style={{ border: 'none', padding: '10px 0' }} onClick={() => setClassType('FIXED')}>CỐ ĐỊNH</button>
-              <button type="button" className={classType === 'EXTRA' ? styles.dayBtnActive : styles.dayBtn} style={{ border: 'none', padding: '10px 0' }} onClick={() => setClassType('EXTRA')}>⚡ EXTRA</button>
+            <div style={{ display: 'flex', gap: '8px', backgroundColor: '#f5f5f7', padding: '4px', borderRadius: '9999px' }}>
+              <button 
+                type="button" 
+                className={classType === 'FIXED' ? styles.dayBtnActive : styles.dayBtn} 
+                style={{ border: 'none', padding: '10px 0' }} 
+                onClick={() => setClassType('FIXED')}
+              >
+                CỐ ĐỊNH
+              </button>
+              <button 
+                type="button" 
+                className={classType === 'EXTRA' ? styles.dayBtnActive : styles.dayBtn} 
+                style={{ border: 'none', padding: '10px 0' }} 
+                onClick={() => setClassType('EXTRA')}
+              >
+                EXTRA
+              </button>
             </div>
           </div>
 
-          <div className={styles.fieldPanel}>
-            <input type="text" className={styles.fieldInput} placeholder="Tên lớp học..." value={name} onChange={(e) => setName(e.target.value)} disabled={loading} />
-          </div>
+          {/* TÊN LỚP HỌC */}
+        <div className={styles.fieldPanel}>
+          <input type="text" className={styles.fieldInput} placeholder="Tên lớp học..." value={name} onChange={(e) => setName(e.target.value)} disabled={loading} />
+        </div>
 
-          <div className={styles.fieldPanel}>
-            <input type="text" className={styles.fieldInput} placeholder="Mã viết tắt (Ví dụ: T9CB1)..." value={short_name} onChange={(e) => setShort_Name(e.target.value)} disabled={loading} />
-          </div>
+        {/* MÃ VIẾT TẮT */}
+        <div className={styles.fieldPanel}>
+          <input type="text" className={styles.fieldInput} placeholder="Mã viết tắt (Ví dụ: T9CB1)..." value={short_name} onChange={(e) => setShort_Name(e.target.value)} disabled={loading} />
+        </div>
 
-          <div className={styles.fieldPanel}>
-            <input type="number" className={styles.fieldInput} placeholder="Thù lao / buổi (VNĐ)..." value={rate_per_session} onChange={(e) => setRate_Per_Session(e.target.value)} disabled={loading} />
-          </div>
+        {/* THÙ LAO */}
+        <div className={styles.fieldPanel}>
+          <input type="number" className={styles.fieldInput} placeholder="Thù lao / buổi (VNĐ)..." value={rate_per_session} onChange={(e) => setRate_Per_Session(e.target.value)} disabled={loading} />
+        </div>
 
-          {classType === 'FIXED' && (
-            <div>
-              <div className={styles.fieldRow} style={{ display: 'flex', gap: '10px' }}>
-                <div style={{ flex: 1 }}><input type="time" className={styles.fieldInput} value={start_time} onChange={(e) => setStart_Time(e.target.value)} /></div>
-                <div style={{ flex: 1 }}><input type="time" className={styles.fieldInput} value={end_time} onChange={(e) => setEnd_Time(e.target.value)} /></div>
-              </div>
-              <div className={styles.fieldPanel}>
-                <input type="date" className={styles.fieldInput} value={valid_from} onChange={(e) => setValid_From(e.target.value)} />
-              </div>
-              <div className={styles.fieldPanel}>
-                <label className={styles.classSubText} style={{ paddingLeft: '10px', fontWeight: '600' }}>Lịch dạy cố định:</label>
-                <div className={styles.weekGrid}>
-                  {daysOfWeekLabels.map((label, index) => (
-                    <button key={index} type="button" onClick={() => toggleDay(index, false)} className={`${styles.dayBtn} ${selectedDays.includes(index) ? styles.dayBtnActive : ''}`}>{label}</button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
 
-          <button type="submit" className={styles.buttonPrimary} disabled={loading}>
-            {loading ? "ĐANG LƯU..." : "KHỞI TẠO LỚP HỌC"}
-          </button>
-        </form>
+         {/* XỬ LÝ ĐỔI LOGIC NGÀY DỰA TRÊN LOẠI LỚP */}
+    <div className={styles.fieldPanel}>
+      {classType === 'FIXED' ? (
+        <>
+          <label className={styles.classSubText} style={{ paddingLeft: '10px', fontWeight: '600', marginBottom: '-4px' }}>
+            Ngày bắt đầu áp dụng lịch:
+          </label>
+          <input type="date" className={styles.fieldInput} value={valid_from} onChange={(e) => setValid_From(e.target.value)} disabled={loading} />
+        </>
+      ) : (
+        <>
+          <label className={styles.classSubText} style={{ paddingLeft: '10px', fontWeight: '600', marginBottom: '-4px' }}>
+            Ngày dạy lớp Extra:
+          </label>
+          {/* Đối với EXTRA, bạn có thể lưu chung vào state valid_from hoặc đổi thành một state khác như extra_date tùy cấu trúc API của bạn */}
+          <input type="date" className={styles.fieldInput} value={valid_from} onChange={(e) => setValid_From(e.target.value)} disabled={loading} />
+        </>
+      )}
+    </div>
+
+    {/* LỊCH DẠY THEO THỨ (Chỉ hiển thị khi chọn lớp CỐ ĐỊNH) */}
+    {classType === 'FIXED' && (
+      <div className={styles.fieldPanel}>
+        <label className={styles.classSubText} style={{ paddingLeft: '10px', fontWeight: '600' }}>
+          Lịch dạy cố định hàng tuần:
+        </label>
+        <div className={styles.weekGrid}>
+          {daysOfWeekLabels.map((label, index) => (
+            <button 
+              key={index} 
+              type="button" 
+              onClick={() => toggleDay(index, false)} 
+              className={`${styles.dayBtn} ${selectedDays.includes(index) ? styles.dayBtnActive : ''}`}
+              disabled={loading}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+    )}
+
+        {/* NÚT SUBMIT */}
+    <button type="submit" className={styles.buttonPrimary} disabled={loading}>
+      {loading ? "ĐANG LƯU..." : "KHỞI TẠO LỚP HỌC"}
+    </button>
+  </form>
       )}
     </div>
   );

@@ -1,180 +1,156 @@
-.Card {
-  width: 400px;
-  margin: 80px auto; 
-  padding: 40px 30px;
-  background-color: var(--bg-card);
-  box-sizing: border-box;
-  border-radius: 20px; 
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); 
+/* =============== CÀI ĐẶT FONT CHỮ TOÀN CỤC =============== */
+.Card, 
+.tabWrapper, 
+.fieldInput, 
+.buttonPrimary {
+  font-family: geist_a71539c9-module__T19VSG__variable, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.Title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--text-title);
-  text-align: center;
-  margin-top: 0;
-  margin-bottom: 40px;
+@media (min-width: 768px) {
+  .Card {
+    padding: 24px;
+    border-radius: 20px;
+  }
 }
 
-.fieldPanel {
+/* =============== THANH CHUYỂN TAB =============== */
+.tabWrapper {
+  display: flex;
+  gap: 8px;
   margin-bottom: 20px;
-  width: 100%;
+  background: #f5f5f7;
+  padding: 4px;
+  border-radius: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-.fieldInput {
-  width: 100%;
-  padding: 14px 24px;        
-  border-radius: 9999px;     
-  border: 1.5px solid var(--border);
-  background-color: var(--bg-input);
-  color: var(--text-title);
-  font-size: 0.95rem;
-  outline: none;
-  box-sizing: border-box;
-}
-
-.buttonPrimary {
-  display: block;
-  width: 50%;               
-  margin: 35px auto 0 auto;
-  padding: 12px 0;
-  border: none;
-  border-radius: 9999px;     
-  background-color: var(--primary);
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  text-align: center;
-}
-
-.fieldInput::placeholder {
-  color: var(--text-main);
-}
-
-.buttonPrimary {
-  display: block;
-  width: 80%;              
-  margin: 50px auto 0 auto;  
-  padding: 12px 0;
-  border: none;
-  border-radius: 9999px;    
-  background-color: var(--btn-main);
-  color: var(--text-btn);
-  font-weight: 600;
-  font-size: 0.9rem;
-  text-transform: uppercase; 
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  text-align: center;
-}
-
-.buttonPrimary:disabled {
-  opacity: 0.5;
-}
-
-@media (max-width: 480px) {
-  .authCard {
-    padding: 30px 20px;      
-    box-shadow: none;        
+@media (min-width: 768px) {
+  .tabWrapper {
+    gap: 12px;
   }
-
-  .authTitle {
-    font-size: 2.1rem;       
-    margin-bottom: 25px;
-  }
-  
-  .actionGroup {
-    margin-top: 25px;
-    gap: 10px;              
-  }
-}
-
-/* Khung chứa 7 nút thứ */
-.weekGrid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 8px; 
-  width: 100%;
-  margin-top: 8px;
 }
 
 .dayBtn {
-  background-color: var(--bg-input); 
-  border: 1.5px solid var(--border);
-  color: var(--text-title);
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 12px 0;
-  border-radius: 14px; /* Bo góc mềm mại vừa phải (hoặc dùng 9999px nếu bạn thích full tròn như viên thuốc) */
+  flex: 1;
+  min-width: max-content;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 10px;
   cursor: pointer;
-  outline: none;
-  box-sizing: border-box;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Hiệu ứng đổi màu mượt mà */
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-/* Hiệu ứng khi di chuột qua (Hover) */
-.dayBtn:hover:not(:disabled) {
-  border-color: var(--primary);
-  background-color: var(--bg-card);
-  transform: translateY(-1px); /* Nhấc nhẹ nút lên tạo cảm giác nổi */
-}
-
-/* Hiệu ứng khi bấm giữ (Active click) */
-.dayBtn:active:not(:disabled) {
-  transform: scale(0.95); /* Co nhỏ lại một chút giống nút linkInline của bạn */
+.dayBtn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #1d1d1f;
 }
 
 .dayBtnActive {
-  background-color: var(--btn-main) !important; /* Lấy màu nút chính login */
-  border-color: var(--btn-main) !important;
-  color: var(--text-btn) !important; /* Màu chữ tương phản */
-  font-weight: 700;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12); /* Đổ bóng nhẹ cho nút nổi bật hẳn lên */
-  transform: translateY(-1px);
-}
-
-/* Trạng thái khi form đang loading */
-.dayBtn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  transform: none !important;
-}
-
-
-
-
-
-
-/* ── Events list ────────────────────────────────────────────────── */
-
-.eventList {
   flex: 1;
-  overflow-y: auto;
-  padding: 0 16px 180px;
+  min-width: max-content;
+  padding: 10px 16px;
+  border: none;
+  background: var(--primary, #6366f1);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  .dayBtn, .dayBtnActive {
+    font-size: 15px;
+    padding: 12px 20px;
+  }
+}
+
+/* =============== THÔNG BÁO =============== */
+.errorText {
+  color: #ff3b30;
+  background: #ffebee;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  font-weight: 500;
+  border-left: 4px solid #ff3b30;
+}
+
+.successText {
+  color: #34c759;
+  background: #e8f5e9;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  font-weight: 500;
+  border-left: 4px solid #34c759;
+}
+
+/* =============== DANH SÁCH LỚP HỌC =============== */
+.classList {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.eventCard {
-  background-color: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 20px;
+@media (min-width: 768px) {
+  .classList {
+    gap: 16px;
+  }
+}
+
+.emptyText {
+  text-align: center;
+  color: #999;
+  padding: 40px 20px;
+  font-size: 15px;
+  font-style: italic;
+}
+
+/* =============== CARD LỚP HỌC MINI =============== */
+.classItemCardMini {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
+  border: 1px solid #e5e5e7;
+  border-radius: 14px;
   padding: 16px;
-  box-shadow: 0 2px 18px rgba(0, 0, 0, 0.06);
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  position: relative;
 }
 
-:global(.dark) .eventCard {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+.classItemCardMini:hover {
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.15);
+  border-color: var(--primary, #6366f1);
+  transform: translateY(-2px);
 }
 
+@media (min-width: 768px) {
+  .classItemCardMini {
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 20px;
+  }
+}
+
+/* =============== NỘI DUNG CARD =============== */
 .cardTop {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 8px;
 }
 
@@ -184,75 +160,321 @@
   gap: 8px;
 }
 
-.cardDot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
 
+/* Sử dụng Font Mono cho thời gian để các con số thẳng hàng đẹp mắt */
 .cardTime {
-  font-size: 11px;
+  font-family: geist_mono_8d43a2aa-module__8Li5zG__variable, Courier, monospace;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--muted-foreground);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  color: #555;
+  background: #f0f0f2;
+  padding: 4px 10px;
+  border-radius: 6px;
 }
 
-.menuBtn {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  opacity: 0.38;
-  transition: opacity 0.15s ease;
+@media (min-width: 768px) {
+  .cardTime {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
 }
 
-.menuBtn:hover {
-  opacity: 0.75;
+.classMeta {
+  margin-top: 8px;
 }
 
-.menuDot {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background-color: var(--muted-foreground);
-}
-
-.cardTitle {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--foreground);
+.classNameText {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1d1d1f;
+  margin: 0 0 6px 0;
   line-height: 1.3;
-  letter-spacing: 0.01em;
+}
+
+@media (min-width: 768px) {
+  .classNameText {
+    font-size: 18px;
+  }
+}
+
+.classSubText {
+  font-size: 13px;
+  color: #86868b;
   margin: 0;
+  line-height: 1.4;
 }
 
-.cardSub {
-  font-size: 12px;
-  color: var(--muted-foreground);
-  margin: 4px 0 0;
-  line-height: 1.55;
+@media (min-width: 768px) {
+  .classSubText {
+    font-size: 14px;
+  }
 }
 
-.viewMore {
-  background: none;
-  border: none;
-  color: #735BF2;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+/* =============== PHẦN BÊN PHẢI CARD =============== */
+.classRightSide {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e5e7;
+}
+
+@media (min-width: 768px) {
+  .classRightSide {
+    flex-direction: column;
+    align-items: flex-end;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    min-width: 140px;
+  }
+}
+
+/* Sử dụng Font Mono cho phần hiển thị học phí/tỷ lệ số */
+.classRateText {
+  font-family: geist_mono_8d43a2aa-module__8Li5zG__variable, Courier, monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary, #6366f1);
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  .classRateText {
+    font-size: 20px;
+  }
+}
+
+.actionButtons {
+  display: flex;
+  gap: 6px;
+}
+
+@media (min-width: 768px) {
+  .actionButtons {
+    gap: 8px;
+  }
+}
+
+.miniActionBtnMini {
+  background: #f5f5f7;
+  border: 1px solid #e5e5e7;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 16px;
   cursor: pointer;
-  padding: 0;
-  font-family: inherit;
-  transition: opacity 0.15s;
+  transition: all 0.2s ease;
+  line-height: 1;
+  color: #1d1d1f;
 }
 
-.viewMore:hover {
-  opacity: 0.75;
-  text-decoration: underline;
+.miniActionBtnMini:hover:not(:disabled) {
+  background: #e5e5e7;
+  transform: scale(1.05);
 }
 
+.miniActionBtnMini:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (min-width: 768px) {
+  .miniActionBtnMini {
+    padding: 10px 14px;
+    font-size: 18px;
+  }
+}
+
+/* =============== KHUNG ĐỔI LỊCH INLINE =============== */
+.inlineEditPanel {
+  background: #f9f9fb;
+  border: 2px dashed #d1d1d6;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 16px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.editPanelTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  margin: 0 0 12px 0;
+}
+
+@media (min-width: 768px) {
+  .editPanelTitle {
+    font-size: 15px;
+  }
+}
+
+/* =============== FORM TẠO MỚI =============== */
+.formScrollable {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+@media (min-width: 768px) {
+  .formScrollable {
+    gap: 20px;
+    max-height: none;
+  }
+}
+
+.fieldPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fieldRow {
+  display: flex;
+  gap: 10px;
+}
+
+.fieldInput {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #e5e5e7;
+  border-radius: 10px;
+  font-size: 15px;
+  color: #1d1d1f;
+  background: #fafafa;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.fieldInput:focus {
+  background: white;
+  border-color: var(--primary, #6366f1);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.fieldInput::placeholder {
+  color: #86868b;
+}
+
+.fieldInput:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (min-width: 768px) {
+  .fieldInput {
+    padding: 16px 18px;
+    font-size: 16px;
+  }
+}
+
+/* =============== LƯỚI CHỌN NGÀY =============== */
+.weekGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+  gap: 6px;
+}
+
+@media (min-width: 768px) {
+  .weekGrid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+  }
+}
+
+/* =============== NÚT PRIMARY =============== */
+.buttonPrimary {
+  background: linear-gradient(135deg, var(--primary, #6366f1) 0%, var(--primary-dark, #4f46e5) 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 16px 24px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+  margin-top: 8px;
+}
+
+.buttonPrimary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+}
+
+.buttonPrimary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.buttonPrimary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (min-width: 768px) {
+  .buttonPrimary {
+    padding: 18px 32px;
+    font-size: 16px;
+  }
+}
+
+/* =============== SCROLLBAR TÙY CHỈNH =============== */
+.formScrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.formScrollable::-webkit-scrollbar-track {
+  background: #f5f5f7;
+  border-radius: 10px;
+}
+
+.formScrollable::-webkit-scrollbar-thumb {
+  background: #d1d1d6;
+  border-radius: 10px;
+}
+
+.formScrollable::-webkit-scrollbar-thumb:hover {
+  background: #86868b;
+}
+
+/* =============== RESPONSIVE UTILITIES =============== */
+@media (max-width: 480px) {
+  .Card {
+    padding: 12px;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+  
+  .classNameText {
+    font-size: 15px;
+  }
+  
+  .classRateText {
+    font-size: 16px;
+  }
+  
+  .miniActionBtnMini {
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+}

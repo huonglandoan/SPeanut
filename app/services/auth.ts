@@ -25,7 +25,6 @@ export async function LoginWithAPI({ email, password }: LoginParams) {
     throw new Error(data.error || 'Đăng nhập không thành công.');
   }
 
-  // Trả về dữ liệu (chứa thông tin user) để Frontend xử lý nếu cần
   return data;
 }
 
@@ -46,7 +45,6 @@ export async function RegisterWithAPI({ email, password, fullName }: RegisterPar
     headers: {
       'Content-Type': 'application/json',
     },
-    // Gửi đúng trường 'name' theo yêu cầu payload của api/register/route.ts
     body: JSON.stringify({ email, password, name: fullName }), 
   });
 

@@ -1,7 +1,6 @@
 // services/class.ts
-import { createClient } from '@/lib/server'; // [THAY ĐỔI QUAN TRỌNG]: Đổi từ lib/supabase sang lib/server
-
-// Danh sách các lớp cố định hiển thị ở FE
+import { createClient } from '@/lib/server'; 
+// Danh sách các lớp 
 export interface GroupedClassDisplay {
   id: number;
   name: string;
@@ -45,7 +44,7 @@ export const ClassService = {
    * 1. Lấy danh sách toàn bộ lớp học của ĐÚNG user đang đăng nhập
    */
   async fetchClasses(userId: string): Promise<GroupedClassDisplay[]> {
-    const supabase = await createClient(); // Khởi tạo Server Client có kèm Cookie
+    const supabase = await createClient(); 
 
     const { data: classesData, error: classErr } = await supabase
       .from('classes')
@@ -181,7 +180,7 @@ export const ClassService = {
    * 4. Xóa hoàn toàn một lớp học dựa trên Class ID và User ID
    */
   async deleteClass(classId: number, userId: string): Promise<void> {
-    const supabase = await createClient(); // Khởi tạo Server Client
+    const supabase = await createClient(); 
 
     const { error } = await supabase
       .from('classes')
