@@ -1,24 +1,10 @@
-// ==================== 2. PHÍA BROWSER (CLIENT COMPONENT) ====================
+// @/lib/supabase.ts
 import { createBrowserClient } from '@supabase/ssr';
 
-// Thay vì export biến tĩnh, ta dùng hàm để khởi tạo an toàn
-export function createBrowserSupabaseClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !anonKey) {
-    console.warn("Supabase credentials missing during build time.");
-    return null as any;
-  }
-
-  return createBrowserClient(url, anonKey);
-}
-
-// Nếu trong các Client Component khác bạn đang import biến `supabase`, 
-// hãy tạo một thực thể an toàn kiểm tra môi trường window trước:
+// Khởi tạo thực thể an toàn phòng thủ lỗi build-time của Vercel
 export const supabase = typeof window !== 'undefined' 
   ? createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!, 
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co', 
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJplaceholder'
     ) 
   : (null as any);

@@ -1,10 +1,8 @@
-import { createServerClient, createBrowserClient } from '@supabase/ssr';
+// @/lib/server.ts
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-// 1. PHÍA SERVER (Server Component / API Route)
 export async function createClient() {
-  // Điền giá trị fallback (mã giả) khi build để Next.js không bị crash, 
-  // khi chạy thật trên Vercel nó sẽ lấy đúng biến môi trường thật trong Settings.
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJplaceholder';
 
@@ -23,11 +21,3 @@ export async function createClient() {
     },
   });
 }
-
-// 2. PHÍA BROWSER (Client Component)
-export const supabase = typeof window !== 'undefined' 
-  ? createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co', 
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJplaceholder'
-    ) 
-  : (null as any);
