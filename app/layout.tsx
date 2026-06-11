@@ -22,12 +22,12 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: '/peanut.png',
+        url: 'https://speanut.com/peanut.png',
         type: 'image/png', // Định nghĩa rõ ràng loại file ảnh
       }
     ],
-    shortcut: '/peanut.png',
-    apple: '/peanut.png',
+    shortcut: 'https://speanut.com/peanut.png',
+    apple: 'https://speanut.com/peanut.png',
   },
   openGraph: {
     title: 'SPeanut',
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     siteName: 'SPeanut',
     images: [
       {
-        url: '/peanut.png',
+        url: 'https://speanut.com/peanut.png',
         width: 512,
         height: 512,
         alt: 'SPeanut Logo',
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'SPeanut',
     description: 'Hệ thống quản lý thù lao và lịch làm việc thông minh dành cho trợ giảng SPeanut.',
-    images: ['/peanut.png'],
+    images: ['https://speanut.com/peanut.png'],
   },
 };
 
@@ -61,6 +61,22 @@ export default function RootLayout({
   return (
     <html lang="vi" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <head>
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://speanut.com" />
+        <meta property="og:title" content="SPeanut" />
+        <meta property="og:description" content="Hệ thống quản lý thù lao và lịch làm việc thông minh dành cho trợ giảng SPeanut." />
+        <meta property="og:image" content="https://speanut.com/peanut.png" />
+        <meta property="og:image:width" content="512" />
+        <meta property="og:image:height" content="512" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:url" content="https://speanut.com" />
+        <meta name="twitter:title" content="SPeanut" />
+        <meta name="twitter:description" content="Hệ thống quản lý thù lao và lịch làm việc thông minh dành cho trợ giảng SPeanut." />
+        <meta name="twitter:image" content="https://speanut.com/peanut.png" />
+
         <script
           dangerouslySetInnerHTML={{
             __html: `
