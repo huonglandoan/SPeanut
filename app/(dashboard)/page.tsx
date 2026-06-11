@@ -6,12 +6,15 @@ import { supabase } from '@/lib/supabase';
 import styles from '../styles/Dashboard.module.css'
 import Scheduler from './class'
 import CalendarView from './calendar'
+import SalaryView from './salary'
+import ProfileView from './profile'
 
 import { BookOpen, Calendar, Wallet, User, Heart } from "lucide-react";
 
 const NAV_ICONS = [BookOpen, Calendar, Wallet, User];
-const NAV_LABELS = ["Class", "Calendar", "Notifications", "Profile"];
+const NAV_LABELS = ["Class", "Calendar", "Wallet", "Profile"];
 export const dynamic = 'force-dynamic';
+
 export default function DashboardPage() {
   const [year, setYear] = useState(2026)
   const [month, setMonth] = useState(4)
@@ -23,12 +26,15 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      // 1. Lấy thông tin phiên đăng nhập từ Supabase
+      // Lấy thông tin phiên đăng nhập từ Supabase
       const { data: { session } } = await supabase.auth.getSession()
       
       if (!session) {
-        // 2. Không có session -> Đẩy người dùng về trang /login ngay
+        // Không có session -> Đẩy người dùng về trang /login ngay
         router.push('/login')
+      } else if (session.user.email === 'admin@speanut.com') {
+        // Nếu là admin -> Chuyển hướng thẳng sang trang quản trị /admin
+        router.push('/admin')
       } else {
         setLoading(false)
       }
@@ -37,58 +43,80 @@ export default function DashboardPage() {
     checkAuth()
 
     // Lắng nghe trạng thái đăng xuất đột ngột
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
-      if (!session) router.push('/login')
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, session: any) => {
+      if (event === 'SIGNED_OUT') {
+        router.push('/login')
+      } else if (session && session.user.email === 'admin@speanut.com') {
+        router.push('/admin')
+      }
     })
 
     return () => subscription.unsubscribe()
   }, [router])
 
-  const renderContent = () => {
-    switch (activeNav) {
-      case 0:
-        return <Scheduler />
-      case 1:
-        return <CalendarView year={year} setYear={setYear} month={month} setMonth={setMonth} selected={selected} setSelected={setSelected} />
-      case 2:
-        return <div>Màn hình Thông báo (Đang phát triển)</div>
-      case 3:
-        return (
-          <div>
-            <h3>Màn hình Profile</h3>
-            <button onClick={() => supabase.auth.signOut()} style={{ padding: '8px 16px', backgroundColor: '#ff4d4f', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-              Đăng xuất (Sign Out)
-            </button>
-          </div>
-        )
-      default:
-        return <div>Màn hình Thông báo (Đang phát triển)</div>
-    }
-  }
-
   const handleToggleTheme = (mode: 'light' | 'dark') => {
-    if (mode === 'dark') document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
+    if (mode === 'dark') {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
   };
 
-  // Nếu đang kiểm tra thông tin, hiện màn hình chờ trắng để bảo mật, không cho xem trước Dashboard
+  // Đồng bộ tiêu đề trang web nếu có cấu hình nhãn hiệu riêng
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const customName = localStorage.getItem('speanut_config_company_name');
+      if (customName) {
+        document.title = customName;
+      }
+    }
+  }, []);
+
+  // Nếu đang kiểm tra thông tin, hiện màn hình chờ trắng để bảo mật
   if (loading) {
+    const appName = (typeof window !== 'undefined' && localStorage.getItem('speanut_config_company_name')) || 'SPeanut';
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#fff' }}>
-        <p style={{ fontSize: '16px', color: '#666' }}>Đang xác thực quyền truy cập SPeanut...</p>
+        <p style={{ fontSize: '16px', color: '#666' }}>Đang xác thực quyền truy cập {appName}...</p>
       </div>
     )
   }
 
   return (
    <div className={styles.wrapper}>
-    <div className={styles.switchContainer}>
-      <div className={styles.slider} />
-      <button type="button" className={styles.switchBtn} onClick={() => handleToggleTheme('light')}>☀️</button>
-      <button type="button" className={styles.switchBtn} onClick={() => handleToggleTheme('dark')}>🌙</button>
+    <div className={styles.topHeader}>
+      <div id="top-left-portal-root" />
+      <div className={styles.switchContainer}>
+        <div className={styles.slider} />
+        <button type="button" className={styles.switchBtn} onClick={() => handleToggleTheme('light')}>☀️</button>
+        <button type="button" className={styles.switchBtn} onClick={() => handleToggleTheme('dark')}>🌙</button>
+      </div>
     </div>
 
-    {renderContent()}
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', width: '100%', paddingBottom: '40px' }}>
+      <div style={{ display: activeNav === 0 ? 'block' : 'none', width: '100%' }}>
+        <Scheduler activeNav={activeNav} />
+      </div>
+      <div style={{ display: activeNav === 1 ? 'block' : 'none', width: '100%' }}>
+        <CalendarView 
+          year={year} 
+          setYear={setYear} 
+          month={month} 
+          setMonth={setMonth} 
+          selected={selected} 
+          setSelected={setSelected}
+          activeNav={activeNav} 
+        />
+      </div>
+      <div style={{ display: activeNav === 2 ? 'block' : 'none', width: '100%' }}>
+        <SalaryView activeNav={activeNav} />
+      </div>
+      <div style={{ display: activeNav === 3 ? 'block' : 'none', width: '100%' }}>
+        <ProfileView activeNav={activeNav} />
+      </div>
+    </div>
 
     <div className={styles.bottomShell}>
       <button className={styles.fab} aria-label="Add event"><Heart /></button>

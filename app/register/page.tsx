@@ -65,51 +65,51 @@ export default function RegisterPage() {
         <button type="button" className={styles.switchBtn} onClick={() => handleToggleTheme('dark')}>🌙</button>
       </div>
 
-      {/* 2. Tiêu đề Register */}
-      <p className={styles.authTitle}>Register</p>
+      {/* 2. Tiêu đề Đăng ký */}
+      <p className={styles.authTitle}>Đăng ký</p>
 
       <form onSubmit={handleSubmit}>
         
-        {/* Ô nhập Full Name (Đã bỏ thẻ label, dùng placeholder chuẩn Figma) */}
+        {/* Ô nhập Họ và tên */}
         <div className={styles.fieldPanel}>
           <input
             type="text"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            placeholder="Full Name"
+            placeholder="Họ và tên"
             className={styles.fieldInput}
           />
         </div>
 
-        {/* Ô nhập E-mail */}
+        {/* Ô nhập Email */}
         <div className={styles.fieldPanel}>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="E-mail"
+            placeholder="Email"
             className={styles.fieldInput}
           />
         </div>
 
-        {/* Ô nhập Password */}
+        {/* Ô nhập Mật khẩu */}
         <div className={styles.fieldPanel}>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
+            placeholder="Mật khẩu"
             className={styles.fieldInput}
           />
         </div>
 
-        {/* Ô nhập Confirm Password */}
+        {/* Ô nhập Xác nhận mật khẩu */}
         <div className={styles.fieldPanel}>
           <input
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirm Password"
+            placeholder="Xác nhận mật khẩu"
             className={styles.fieldInput}
           />
         </div>
@@ -121,11 +121,11 @@ export default function RegisterPage() {
         {/* 3. Cụm nút bấm kéo dài 100% xếp chồng chuẩn chỉnh theo bản Dark/Light Register */}
         <div className={styles.actionGroup}>
           <button type="submit" disabled={loading} className={styles.buttonRegister}>
-            {loading ? 'Đang tạo tài khoản...' : 'Register'}
+            {loading ? 'Đang tạo tài khoản...' : 'Đăng ký'}
           </button>
           
           <Link href="/login" className={styles.buttonLink}>
-            Have account? Sign In
+            Đã có tài khoản? Đăng nhập ngay
           </Link>
         </div>
       </form>

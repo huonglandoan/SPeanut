@@ -125,7 +125,7 @@
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background-color: #735BF2;
+  background-color: var(--primary, #735BF2);
   border: none;
   display: flex;
   align-items: center;
@@ -213,7 +213,7 @@
 }
 
 .navBtn.active {
-  color: #735BF2;
+  color: var(--primary, #735BF2);
 }
 
 .navBtn svg {
@@ -315,6 +315,14 @@
 }
 
 
+.topHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
 .switchContainer {
   position: relative;
   display: flex;
@@ -323,7 +331,7 @@
   background-color: var(--bg-input); 
   border: 1.5px solid var(--border);
   border-radius: 9999px;     
-  margin: 0 0 30px auto;     
+  margin: 0 0 0 auto;     
   padding: 2px;
   overflow: hidden;          
   box-sizing: border-box;

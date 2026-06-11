@@ -2,32 +2,50 @@
 
 :root {
   /* Chế độ Sáng (Light Mode) */
-  --bg-app: #f1f5f9;         /* Màu nền xám nhạt sang trọng */
+  --bg-app: #f8fafc;         /* Nền xám rất nhạt cao cấp */
   --bg-card: #ffffff;
-  --text-main: #64748b;
-  --text-title: #1e3a8a;
-  --border: #4f46e5;
+  --text-main: #1e293b;      /* Gần đen (slate-800) để cực kỳ dễ đọc */
+  --text-title: #0f172a;     /* Đen tuyền (slate-900) cho tiêu đề */
+  --border: #cbd5e1;         /* Xám nhạt tinh tế (slate-300) cho viền */
   --bg-input: #ffffff;
-  
-  --btn-main: #1d4ed8;
+  --primary: #735BF2;        /* Màu tím thương hiệu */
+
+  --btn-main: #4f46e5;       /* Indigo nút chính */
   --btn-reg-1: #9333ea;
   --btn-reg-2: #4f46e5;
   --text-btn: #ffffff;
+
+  /* Biến CSS chuẩn cho các module component */
+  --background: #f8fafc;
+  --card: #ffffff;
+  --foreground: #000000;      /* Chữ đen hoàn toàn cho người dùng */
+  --muted: #f1f5f9;
+  --muted-foreground: #334155; /* Chữ phụ xám đậm dễ nhìn */
+  --red: #ff3b30;
 }
 
 html.dark {
   /* Chế độ Tối (Dark Mode) */
-  --bg-app: #121214;          /* Đen tuyền chuẩn Figma */
+  --bg-app: #0b0f19;          /* Đen xanh thẳm sang trọng */
   --bg-card: #121214;
-  --text-main: #9ca3af;
-  --text-title: #ffffff;
-  --border: #b088ff;          /* Tím neon rực rỡ */
+  --text-main: #cbd5e1;      /* Chữ chính sáng (slate-300) */
+  --text-title: #ffffff;     /* Tiêu đề trắng tinh */
+  --border: #334155;          /* Viền tối (slate-700) */
   --bg-input: #121214;
+  --primary: #735BF2;
 
-  --btn-main: #c084fc;
+  --btn-main: #735BF2;
   --btn-reg-1: #6b21a8;
   --btn-reg-2: #1e1b4b;
   --text-btn: #ffffff;
+
+  /* Biến CSS dark mode đồng bộ */
+  --background: #0b0f19;
+  --card: #121214;
+  --foreground: #ffffff;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --red: #ff3b30;
 }
 
 /* Cấu hình Responsive toàn cục cho body */

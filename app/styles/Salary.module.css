@@ -1,0 +1,575 @@
+/* app/styles/Salary.module.css */
+
+.salaryWrapper {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Month Selector ──────────────────────────────────────────────── */
+.monthHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+}
+
+.monthLabel {
+  text-align: center;
+}
+
+.monthName {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-title);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.monthYear {
+  font-size: 12px;
+  color: var(--text-main);
+  margin: 2px 0 0;
+}
+
+.iconBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background-color: var(--bg-card);
+  color: var(--text-title);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.iconBtn:hover {
+  background-color: var(--bg-app);
+  transform: scale(1.05);
+}
+
+.iconBtn svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+/* ── Balance Card ────────────────────────────────────────────────── */
+.balanceCard {
+  background-color: #735BF2;
+  border-radius: 24px;
+  padding: 24px;
+  color: #ffffff;
+  box-shadow: 0 10px 30px rgba(115, 91, 242, 0.3);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s ease;
+}
+
+.balanceCard:hover {
+  transform: translateY(-2px);
+}
+
+
+
+.balanceHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.balanceLabel {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+}
+
+.walletIcon {
+  width: 24px;
+  height: 24px;
+  opacity: 0.9;
+}
+
+.balanceAmount {
+  font-size: 32px;
+  font-weight: 800;
+  margin: 12px 0 0;
+  letter-spacing: -0.02em;
+}
+
+/* ── Sub Stats Grid ──────────────────────────────────────────────── */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.statCard {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+}
+
+:global(.dark) .statCard {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.statLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statValue {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-title);
+}
+
+/* ── Section Header ─────────────────────────────────────────────── */
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-title);
+  margin: 12px 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Summary Cards ───────────────────────────────────────────────── */
+.summaryList, .logList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summaryCard {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.summaryCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+:global(.dark) .summaryCard:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.cardLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.cardDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cardMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+}
+
+.cardName {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-title);
+}
+
+.cardSubText {
+  font-size: 12px;
+  color: var(--text-main);
+}
+
+.cardRight {
+  text-align: right;
+}
+
+.cardSalary {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-title);
+}
+
+.cardSessions {
+  font-size: 12px;
+  color: var(--text-main);
+  margin-top: 2px;
+}
+
+/* ── Audit Logs ──────────────────────────────────────────────────── */
+.logItem {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+}
+
+.logItem:hover {
+  background-color: var(--bg-app);
+}
+
+.logLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+}
+
+.logDate {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-title);
+  transition: all 0.2s ease;
+}
+
+.logClassName {
+  font-size: 12px;
+  color: var(--text-main);
+}
+
+.logRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-align: right;
+}
+
+.logDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.logRate {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-title);
+  transition: all 0.2s ease;
+}
+
+.logTime {
+  font-size: 11px;
+  color: var(--text-main);
+}
+
+.statusBadge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  min-width: 60px;
+  text-align: center;
+}
+
+.badgeActive {
+  background-color: rgba(0, 179, 131, 0.1);
+  color: #00B383;
+}
+
+.badgeCancelled {
+  background-color: rgba(255, 59, 48, 0.1);
+  color: #FF3B30;
+}
+
+.logItemCancelled {
+  opacity: 0.6;
+  border-style: dashed !important;
+  border-color: #FF3B30 !important;
+  background-color: rgba(255, 59, 48, 0.01);
+}
+
+.logItemCancelled .logDate,
+.logItemCancelled .logRate {
+  text-decoration: line-through;
+  color: #FF3B30 !important;
+}
+
+.noDataText {
+  text-align: center;
+  color: var(--text-main);
+  font-size: 14px;
+  padding: 32px 16px;
+  background-color: var(--bg-card);
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+}
+
+.exportCard {
+  background-color: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+  flex-wrap: wrap;
+  transition: transform 0.2s ease;
+}
+
+.exportCard:hover {
+  transform: translateY(-1px);
+}
+
+:global(.dark) .exportCard {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.exportCardLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 250px;
+}
+
+.exportCardIcon {
+  width: 32px;
+  height: 32px;
+  color: var(--primary, #735BF2);
+  flex-shrink: 0;
+}
+
+.exportCardMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+
+.exportCardTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-title);
+}
+
+.exportCardDesc {
+  font-size: 13px;
+  color: var(--text-main);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.exportBtn {
+  background-color: var(--primary, #735BF2);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.exportBtn:hover {
+  background-color: #5b43d6;
+  transform: translateY(-1px);
+}
+
+.exportBtn:active {
+  transform: translateY(0);
+}
+
+/* ── Extra Income Section ────────────────────────────────────────── */
+.balanceSub {
+  font-size: 12px;
+  opacity: 0.9;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.extraIncomeSection {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+}
+
+:global(.dark) .extraIncomeSection {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.extraForm {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.extraInput {
+  flex: 2;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background-color: var(--bg-input);
+  color: var(--text-title);
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.extraInput:focus, .extraInputAmount:focus {
+  outline: none;
+  border-color: var(--primary, #735BF2);
+}
+
+.extraInputAmount {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background-color: var(--bg-input);
+  color: var(--text-title);
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.extraAddBtn {
+  background-color: var(--primary, #735BF2);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.extraAddBtn:hover {
+  background-color: #5b43d6;
+  transform: translateY(-1px);
+}
+
+.extraList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.extraEmptyText {
+  text-align: center;
+  color: var(--text-main);
+  font-size: 13px;
+  margin: 8px 0;
+  font-style: italic;
+}
+
+.extraItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background-color: var(--bg-app);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  transition: all 0.2s ease;
+}
+
+.extraItem:hover {
+  border-color: var(--primary, #735BF2);
+}
+
+.extraItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.extraItemName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-title);
+}
+
+.extraItemRight {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.extraItemAmount {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary, #735BF2);
+}
+
+.extraDelBtn {
+  background: transparent;
+  border: none;
+  color: #ff3b30;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.extraDelBtn:hover {
+  background-color: rgba(255, 59, 48, 0.08);
+}
+
+@media (max-width: 500px) {
+  .extraForm {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .extraAddBtn {
+    justify-content: center;
+    padding: 12px;
+  }
+}
+
+

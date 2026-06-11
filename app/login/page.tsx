@@ -8,8 +8,8 @@ import { LoginWithAPI } from '../services/auth'
 import styles from '../styles/Login.module.css'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('user');
+  const [password, setPassword] = useState('123456');
   const [loading, setLoading] = useState(false); // Đã sửa chính tả setLoanding -> setLoading
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -18,8 +18,10 @@ export default function LoginPage() {
   const handleToggleTheme = (mode: 'light' | 'dark') => {
     if (mode === 'dark') {
       document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
   };
 
@@ -35,13 +37,30 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      // 1. Gọi service đăng nhập thẳng qua Supabase Client
-      await LoginWithAPI({ email, password });
+      let targetEmail = email.trim();
+      if (targetEmail === 'admin') {
+        targetEmail = 'admin@speanut.com';
+      } else if (targetEmail === 'user') {
+        targetEmail = 'user@speanut.com';
+      }
+
+      // Đăng nhập trực tiếp bằng client-side supabase instance
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: targetEmail,
+        password,
+      });
+
+      if (signInError) {
+        throw new Error(signInError.message);
+      }
       
       setSuccess('Đăng nhập thành công!');
 
-      // 2. Chuyển user thẳng tiến vào trang Dashboard hưởng thành quả
-      router.push('/');
+      // Chuyển hướng
+      const target = (targetEmail === 'admin@speanut.com')
+        ? '/admin'
+        : '/';
+      window.location.href = target;
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -60,30 +79,30 @@ return (
     <button type="button" className={styles.switchBtn} onClick={() => handleToggleTheme('dark')}>🌙</button>
   </div>
 
-  {/* 2. Tiêu đề Login */}
+  {/* 2. Tiêu đề Đăng nhập */}
 
-    <p className={styles.authTitle}>Login</p>
+    <p className={styles.authTitle}>Đăng nhập</p>
 
     <form onSubmit={handleSubmit}>
       
-      {/*Email*/}
+      {/*Email hoặc Tên đăng nhập*/}
       <div className={styles.fieldPanel}>
         <input
-          type="email"
+          type="text"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email" 
+          placeholder="Email hoặc Tên đăng nhập" 
           className={styles.fieldInput}
         />
       </div>
 
-      {/* Ô nhập Password */}
+      {/* Ô nhập Mật khẩu */}
       <div className={styles.fieldPanel}>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
+          placeholder="Mật khẩu"
           className={styles.fieldInput}
         />
       </div>
@@ -94,13 +113,20 @@ return (
       <div className={styles.actionGroup}></div>
       
       <button type="submit" disabled={loading} className={styles.buttonPrimary}>
-        {loading ? 'LOADING...' : 'LOGIN'}
+        {loading ? 'Đang tải...' : 'Đăng nhập'}
       </button>
 
       <p className={styles.textMuted}>
         Chưa có tài khoản?{' '}
         <Link href="/register" className={styles.linkInline}>
           Đăng ký ngay
+        </Link>
+      </p>
+
+      <p className={styles.textMuted} style={{ marginTop: '12px', fontSize: '12px' }}>
+        Thiết lập hệ thống?{' '}
+        <Link href="/deploy" style={{ color: 'var(--primary, #735bf2)', fontWeight: 600, textDecoration: 'none' }}>
+          Cấu hình & Deploy
         </Link>
       </p>
     </form>

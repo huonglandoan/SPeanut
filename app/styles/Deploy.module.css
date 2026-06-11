@@ -1,0 +1,214 @@
+/* app/styles/Deploy.module.css */
+
+.deployWrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', -apple-system, sans-serif;
+  transition: background-color 0.35s ease, color 0.35s ease;
+}
+
+.deployCard {
+  width: 100%;
+  max-width: 680px;
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+:global(.dark) .deployCard {
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.deployTitle {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #735bf2 0%, #00b383 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.deploySubtitle {
+  font-size: 14px;
+  color: var(--muted-foreground);
+  margin-bottom: 32px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #735bf2;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 20px;
+  border-left: 3px solid #735bf2;
+  padding-left: 10px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 8px;
+}
+
+.input {
+  width: 100%;
+  padding: 14px 16px;
+  background-color: var(--bg-input, #ffffff);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--foreground);
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #735bf2;
+  box-shadow: 0 0 0 3px rgba(115, 91, 242, 0.15);
+}
+
+.btnRow {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+  margin-bottom: 32px;
+}
+
+.btn {
+  flex: 1;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+}
+
+.btnPrimary {
+  background-color: #735bf2;
+  color: #fff;
+}
+
+.btnPrimary:hover {
+  background-color: #5f48db;
+  transform: translateY(-1px);
+}
+
+.btnSecondary {
+  background-color: var(--muted);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+
+.btnSecondary:hover {
+  background-color: var(--border);
+}
+
+.btnDanger {
+  background-color: rgba(255, 59, 48, 0.1);
+  color: #ff3b30;
+  border: 1px solid rgba(255, 59, 48, 0.2);
+  flex: 0.5;
+}
+
+.btnDanger:hover {
+  background-color: rgba(255, 59, 48, 0.15);
+}
+
+.statusBanner {
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.statusSuccess {
+  background-color: rgba(0, 179, 131, 0.1);
+  color: #00b383;
+  border: 1px solid rgba(0, 179, 131, 0.2);
+}
+
+.statusError {
+  background-color: rgba(255, 59, 48, 0.1);
+  color: #ff3b30;
+  border: 1px solid rgba(255, 59, 48, 0.2);
+}
+
+.instructionsCard {
+  background-color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-top: 32px;
+}
+
+.instructionTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--foreground);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.instructionList {
+  padding-left: 20px;
+  margin: 0;
+}
+
+.instructionItem {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+
+.codeBlock {
+  font-family: monospace;
+  background-color: var(--border);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #c026d3;
+}
+
+.navLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  margin-bottom: 24px;
+  transition: color 0.2s ease;
+}
+
+.navLink:hover {
+  color: #735bf2;
+}

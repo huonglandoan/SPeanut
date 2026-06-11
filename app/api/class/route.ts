@@ -33,6 +33,19 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
+        const { action, classId } = body;
+
+        if (action === 'repeat') {
+            if (!classId) {
+                return NextResponse.json({ error: "Thiếu ID lớp học để thực hiện lặp lại." }, { status: 400 });
+            }
+            const nextMonthLabel = await ClassService.repeatClassForNextMonth(Number(classId), userId);
+            return NextResponse.json({ 
+                success: true, 
+                message: `Đã nhân bản lịch học sang tháng ${nextMonthLabel} thành công!` 
+            }, { status: 200 });
+        }
+
         const { name, short_name, rate_per_session, type, selectedDays, start_time, end_time, valid_from } = body;        
         
         if (!name || !short_name || !rate_per_session || !type) {

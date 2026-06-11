@@ -14,14 +14,55 @@ export async function POST(request: Request) {
       );
     }
 
+    let targetEmail = email.trim();
+    const isAdminMode = targetEmail === 'admin';
+    if (isAdminMode) {
+      targetEmail = 'admin@speanut.com';
+    }
+
     // 1. Khởi tạo Supabase Server Client (để kích hoạt cơ chế tự động ghi Cookie)
     const supabaseServer = await createClient();
 
     // 2. Gọi hàm đăng nhập bằng Server Client này
-    const { data, error } = await supabaseServer.auth.signInWithPassword({
-      email,
+    let { data, error } = await supabaseServer.auth.signInWithPassword({
+      email: targetEmail,
       password,
     });
+
+    // Tự động tạo tài khoản admin nếu đăng nhập sai credentials lần đầu
+    if (error && isAdminMode && (error.message.includes('Invalid login credentials') || error.message.toLowerCase().includes('invalid'))) {
+      console.log('Admin user does not exist. Creating admin account...');
+      const { data: signUpData, error: signUpError } = await supabaseServer.auth.signUp({
+        email: targetEmail,
+        password: '111111',
+      });
+
+      if (signUpError) {
+        console.error('Lỗi tự động đăng ký tài khoản admin:', signUpError);
+      } else if (signUpData.user) {
+        // Chèn thông tin vào bảng public.users để đồng bộ
+        const { error: insertError } = await supabaseServer
+          .from('users')
+          .insert([
+            {
+              id: signUpData.user.id,
+              email: targetEmail,
+              full_name: 'Admin SPeanut',
+            }
+          ]);
+        if (insertError) {
+          console.error('Lỗi chèn profile cho admin:', insertError);
+        }
+
+        // Đăng nhập lại sau khi tạo tài khoản thành công
+        const retryRes = await supabaseServer.auth.signInWithPassword({
+          email: targetEmail,
+          password: '111111',
+        });
+        data = retryRes.data;
+        error = retryRes.error;
+      }
+    }
 
     if (error) {
       return NextResponse.json(

@@ -1,0 +1,629 @@
+.adminWrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.adminHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 20px;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.adminTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--foreground);
+  margin: 0;
+}
+
+.adminSubtitle {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  margin: 0;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.monthSelectRow {
+  display: flex;
+  align-items: center;
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.monthLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--foreground);
+  min-width: 110px;
+  text-align: center;
+}
+
+.adminLogoutBtn {
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background-color: var(--card);
+  color: var(--red, #ff3b30);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.adminLogoutBtn:hover {
+  background-color: rgba(255, 59, 48, 0.08);
+  border-color: rgba(255, 59, 48, 0.2);
+}
+
+.adminContent {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .adminContent {
+    grid-template-columns: 1fr;
+  }
+}
+
+.usersCard {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--foreground);
+  margin: 0;
+}
+
+.userList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.userItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--background);
+}
+
+.userItem:hover {
+  background-color: var(--muted);
+  border-color: var(--border);
+}
+
+.userItemActive {
+  background-color: var(--muted);
+  border-color: var(--primary, #735BF2);
+  box-shadow: 0 4px 12px rgba(115, 91, 242, 0.08);
+}
+
+.userAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border);
+  background-color: var(--muted);
+}
+
+.userMeta {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.userName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userEmail {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userStatsText {
+  font-size: 11px;
+  color: var(--primary, #735BF2);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.detailCard {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 40px;
+  color: var(--muted-foreground);
+  text-align: center;
+  background-color: var(--card);
+  border: 1px dashed var(--border);
+  border-radius: 24px;
+}
+
+.emptyText {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.profileSection {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.profileInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-width: 250px;
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background-color: var(--background);
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.infoLabel {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.infoValue {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.qrThumbnail {
+  width: 100px;
+  height: 100px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.qrThumbnail:hover {
+  transform: scale(1.05);
+}
+
+.salarySummary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.summaryBox {
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.boxLabel {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+
+.boxValue {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.classesList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.classCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.classLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.classDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.classMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.className {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.classRate {
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+
+.classRight {
+  text-align: right;
+}
+
+.classSalary {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.classSessions {
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+
+.logTableWrapper {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.logTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.logTable th {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+  font-weight: 600;
+  padding: 10px 14px;
+  font-size: 11px;
+  text-transform: uppercase;
+  position: sticky;
+  top: 0;
+}
+
+.logTable td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+.logTable tr:last-child td {
+  border-bottom: none;
+}
+
+.logTable tr:hover td {
+  background-color: var(--muted);
+}
+
+/* ── Tabs Styling ────────────────────────────────────────────────── */
+.tabContainer {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+}
+
+.tabBtn {
+  padding: 8px 18px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: none;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tabBtn:hover {
+  background-color: var(--muted);
+  color: var(--foreground);
+}
+
+.tabBtnActive {
+  background-color: var(--primary, #735BF2);
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(115, 91, 242, 0.2);
+}
+
+/* ── Payroll List Tab ────────────────────────────────────────────── */
+.payrollHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.payrollTableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background-color: var(--card);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+:global(.dark) .payrollTableWrapper {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.payrollTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+
+.payrollTable th {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+  padding: 14px 16px;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.payrollTable td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  color: var(--foreground);
+}
+
+.payrollTable tr:last-child td {
+  border-bottom: none;
+}
+
+.payrollTable tr:hover td {
+  background-color: var(--muted);
+}
+
+.payrollQrCol {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.payrollQrThumbnail {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.payrollQrThumbnail:hover {
+  transform: scale(1.1);
+}
+
+.payrollBankInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.payrollBankBrand {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.payrollBankMeta {
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+
+.exportAllBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background-color: #00B383;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 179, 131, 0.2);
+  transition: all 0.2s ease;
+}
+
+.exportAllBtn:hover {
+  background-color: #009970;
+  transform: translateY(-1px);
+}
+
+.exportAllBtn:active {
+  transform: translateY(0);
+}
+
+/* ── Classes List Tab ────────────────────────────────────────────── */
+.classesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.adminClassCard {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.adminClassCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(0,0,0,0.06);
+  border-color: var(--primary, #735BF2);
+}
+
+.classCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.teacherBadge {
+  background-color: var(--muted);
+  color: var(--primary, #735BF2);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 8px;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.adminDeleteBtn {
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 59, 48, 0.2);
+  background-color: var(--card);
+  color: var(--red, #ff3b30);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: center;
+  display: block;
+  margin-top: 8px;
+}
+
+.adminDeleteBtn:hover {
+  background-color: rgba(255, 59, 48, 0.08);
+  border-color: rgba(255, 59, 48, 0.4);
+}
+
+.classDeleteBtn {
+  background: none;
+  border: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.classDeleteBtn:hover {
+  background-color: rgba(255, 59, 48, 0.08);
+  color: var(--red, #ff3b30);
+}
+

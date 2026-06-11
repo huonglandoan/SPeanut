@@ -39,6 +39,15 @@ export interface ChangeScheduleInput {
 // Các thứ trong tuần
 const daysOfWeekLabels = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
+// Helper để tính ngày cuối cùng của tháng từ chuỗi YYYY-MM-DD
+function getEndOfMonth(dateStr: string): string {
+  const dateParts = dateStr.split('-');
+  const year = parseInt(dateParts[0], 10);
+  const month = parseInt(dateParts[1], 10);
+  const lastDayDate = new Date(year, month, 0);
+  return `${lastDayDate.getFullYear()}-${String(lastDayDate.getMonth() + 1).padStart(2, "0")}-${String(lastDayDate.getDate()).padStart(2, "0")}`;
+}
+
 export const ClassService = {
   /**
    * 1. Lấy danh sách toàn bộ lớp học của ĐÚNG user đang đăng nhập
@@ -57,35 +66,66 @@ export const ClassService = {
 
     const { data: schedulesData, error: scheduleErr } = await supabase
       .from('class_schedules')
-      .select('*')
-      .is('valid_to', null);
+      .select('*');
 
     if (scheduleErr) throw scheduleErr;
 
-   return (classesData || []).map((cls: any) => {
+    return (classesData || []).map((cls: any) => {
+      // Lấy toàn bộ lịch học của lớp này (dùng chung cho cả FIXED và EXTRA)
+      const allClassSchedules = (schedulesData || []).filter((s: any) => s?.class_id === cls?.id);
+      
       if (cls.type === 'EXTRA') {
+        // EXTRA cũng lấy thông tin lịch từ class_schedules
+        const schedule = allClassSchedules[0];
         return { 
           id: cls.id, 
           name: cls.name, 
           short_name: cls.short_name, 
           rate_per_session: cls.rate_per_session, 
-          type: 'EXTRA' 
+          type: 'EXTRA' as const,
+          days: schedule ? [daysOfWeekLabels[schedule.day_of_week]] : undefined,
+          start_time: schedule?.start_time?.slice(0, 5) || '18:00',
+          end_time: schedule?.end_time?.slice(0, 5) || '20:00',
+          valid_from: schedule?.valid_from
         };
       }
-      // Thêm dấu ? sau s và cls
-const classSchedules = (schedulesData || []).filter((s: any) => s?.class_id === cls?.id);
-     const days = (classSchedules || []).map((s: any) => daysOfWeekLabels[s?.day_of_week]);
+
+      // Tìm lịch dạy đang hoạt động (hôm nay nằm trong khoảng từ valid_from đến valid_to)
+      const todayStr = new Date().toISOString().split('T')[0];
+      let activeSchedules = allClassSchedules.filter((s: any) => {
+        return s.valid_from <= todayStr && (s.valid_to === null || todayStr <= s.valid_to);
+      });
+
+      // Nếu không có lịch nào đang chạy hôm nay, lấy lịch mới nhất làm đại diện
+      if (activeSchedules.length === 0 && allClassSchedules.length > 0) {
+        const sorted = [...allClassSchedules].sort((a: any, b: any) => {
+          const dateComp = b.valid_from.localeCompare(a.valid_from);
+          if (dateComp !== 0) return dateComp;
+          return b.id - a.id;
+        });
+        const latestValidFrom = sorted[0].valid_from;
+        activeSchedules = sorted.filter((s: any) => s.valid_from === latestValidFrom);
+      }
+
+      // Sắp xếp thứ trong tuần theo thứ tự tăng dần từ T2 -> T3 -> ... -> T7 -> CN
+      activeSchedules.sort((a: any, b: any) => {
+        const valA = a.day_of_week === 0 ? 7 : a.day_of_week;
+        const valB = b.day_of_week === 0 ? 7 : b.day_of_week;
+        return valA - valB;
+      });
+
+      const days = (activeSchedules || []).map((s: any) => daysOfWeekLabels[s?.day_of_week]);
       
       return {
         id: cls.id,
         name: cls.name,
         short_name: cls.short_name,
         rate_per_session: cls.rate_per_session,
-        type: 'FIXED',
+        type: 'FIXED' as const,
         days: days,
-        start_time: classSchedules[0]?.start_time?.slice(0, 5) || '18:00',
-        end_time: classSchedules[0]?.end_time?.slice(0, 5) || '20:00',
-        valid_from: classSchedules[0]?.valid_from
+        start_time: activeSchedules[0]?.start_time?.slice(0, 5) || '18:00',
+        end_time: activeSchedules[0]?.end_time?.slice(0, 5) || '20:00',
+        valid_from: activeSchedules[0]?.valid_from
       };
     });
   },
@@ -111,18 +151,36 @@ const classSchedules = (schedulesData || []).filter((s: any) => s?.class_id === 
     if (classError) throw classError;
 
     if (input.type === 'FIXED' && newClass) {
+      const lastDayStr = getEndOfMonth(input.valid_from);
       const rowsToInsert = input.selectedDays.map((day) => ({ 
         class_id: newClass.id, 
         day_of_week: day, 
         start_time: input.start_time, 
         end_time: input.end_time, 
         valid_from: input.valid_from, 
-        valid_to: null 
+        valid_to: lastDayStr 
       }));
 
       const { error: scheduleError } = await supabase
         .from('class_schedules')
         .insert(rowsToInsert);
+
+      if (scheduleError) throw scheduleError;
+    } else if (input.type === 'EXTRA' && newClass) {
+      // Lớp EXTRA chỉ học đúng 1 buổi vào ngày valid_from
+      const date = new Date(input.valid_from);
+      const dayOfWeek = date.getUTCDay(); // 0 = CN, 1 = T2, ..., 6 = T7
+
+      const { error: scheduleError } = await supabase
+        .from('class_schedules')
+        .insert({ 
+          class_id: newClass.id, 
+          day_of_week: dayOfWeek, 
+          start_time: input.start_time || '18:00', 
+          end_time: input.end_time || '20:00', 
+          valid_from: input.valid_from, 
+          valid_to: input.valid_from 
+        });
 
       if (scheduleError) throw scheduleError;
     }
@@ -147,27 +205,23 @@ const classSchedules = (schedulesData || []).filter((s: any) => s?.class_id === 
       throw new Error("Bạn không có quyền thay đổi lịch của lớp học này!");
     }
 
-    const previousDate = new Date(editValidFrom);
-    previousDate.setDate(previousDate.getDate() - 1);
-    const validToValue = previousDate.toISOString().split('T')[0];
-
-    // Đóng hiệu lực lịch cũ
-    const { error: closeError } = await supabase
+    // Xóa toàn bộ lịch cũ của lớp này trong database để cập nhật trực tiếp lịch mới
+    const { error: deleteError } = await supabase
       .from('class_schedules')
-      .update({ valid_to: validToValue })
-      .eq('class_id', classId)
-      .is('valid_to', null);
+      .delete()
+      .eq('class_id', classId);
 
-    if (closeError) throw closeError;
+    if (deleteError) throw deleteError;
 
     // Chuẩn bị các bản ghi lịch trình mới để đưa vào database
+    const lastDayStr = getEndOfMonth(editValidFrom);
     const newSchedules = editSelectedDays.map(day => ({
       class_id: classId,
       day_of_week: day,
       start_time: editStartTime,
       end_time: editEndTime,
       valid_from: editValidFrom,
-      valid_to: null
+      valid_to: lastDayStr
     }));
 
     const { error: insertError } = await supabase
@@ -178,7 +232,96 @@ const classSchedules = (schedulesData || []).filter((s: any) => s?.class_id === 
   },
 
   /**
-   * 4. Xóa hoàn toàn một lớp học dựa trên Class ID và User ID
+   * 4. Lặp lại lịch dạy của lớp FIXED sang tháng tiếp theo bắt đầu từ ngày 1
+   *    → Tạo lớp MỚI (bản sao độc lập) để xóa tháng mới không ảnh hưởng tháng cũ
+   */
+  async repeatClassForNextMonth(classId: number, userId: string): Promise<string> {
+    const supabase = await createClient();
+
+    // Xác nhận chủ sở hữu lớp học
+    const { data: classData, error: classErr } = await supabase
+      .from('classes')
+      .select('*')
+      .eq('id', classId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (classErr || !classData) {
+      throw new Error("Bạn không có quyền chỉnh sửa lớp học này!");
+    }
+
+    // Lấy toàn bộ lịch dạy của lớp học này
+    const { data: schedules, error: scheduleErr } = await supabase
+      .from('class_schedules')
+      .select('*')
+      .eq('class_id', classId);
+
+    if (scheduleErr) throw scheduleErr;
+    if (!schedules || schedules.length === 0) {
+      throw new Error("Lớp học này chưa có lịch dạy để lặp lại!");
+    }
+
+    // Tìm lịch mới nhất (valid_from lớn nhất) để làm mốc tính tháng tiếp theo
+    const sorted = [...schedules].sort((a: any, b: any) => b.valid_from.localeCompare(a.valid_from));
+    const latestValidFrom = sorted[0].valid_from; // Ví dụ: "2026-04-01"
+
+    const dateParts = latestValidFrom.split('-');
+    let year = parseInt(dateParts[0], 10);
+    let month = parseInt(dateParts[1], 10);
+
+    // Tính tháng tiếp theo
+    month += 1;
+    if (month > 12) {
+      month = 1;
+      year += 1;
+    }
+
+    const nextMonthStr = String(month).padStart(2, '0');
+    const newValidFrom = `${year}-${nextMonthStr}-01`;
+    const newValidTo = getEndOfMonth(newValidFrom);
+
+    // Lấy các lịch dạy thuộc cùng chu kỳ mới nhất
+    const activePeriodSchedules = schedules.filter(s => s.valid_from === latestValidFrom);
+
+    // -----------------------------------------------------------------------
+    // TẠO LỚP MỚI (bản sao độc lập) thay vì thêm lịch vào lớp cũ
+    // → Khi xóa bản sao KHÔNG ảnh hưởng lớp gốc và ngược lại
+    // -----------------------------------------------------------------------
+    const { data: newClass, error: newClassErr } = await supabase
+      .from('classes')
+      .insert({
+        user_id: userId,
+        name: classData.name,
+        short_name: classData.short_name,
+        rate_per_session: classData.rate_per_session,
+        type: classData.type,
+      })
+      .select()
+      .single();
+
+    if (newClassErr || !newClass) throw newClassErr ?? new Error("Không thể tạo lớp bản sao.");
+
+    // Lưu lịch dạy mới gắn vào lớp BẢN SAO (không chạm lớp gốc)
+    const rowsToInsert = activePeriodSchedules.map((s) => ({
+      class_id: newClass.id,   // ← ID lớp MỚI, không phải lớp cũ
+      day_of_week: s.day_of_week,
+      start_time: s.start_time,
+      end_time: s.end_time,
+      valid_from: newValidFrom,
+      valid_to: newValidTo
+    }));
+
+    const { error: insertError } = await supabase
+      .from('class_schedules')
+      .insert(rowsToInsert);
+
+    if (insertError) throw insertError;
+
+    return `${month}/${year}`;
+  },
+
+  /**
+   * 5. Xóa hoàn toàn một lớp học dựa trên Class ID và User ID
    */
   async deleteClass(classId: number, userId: string): Promise<void> {
     const supabase = await createClient(); 
