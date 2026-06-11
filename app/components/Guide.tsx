@@ -402,7 +402,7 @@ export function InteractiveTour({ activeNav }: InteractiveTourProps) {
         </p>
 
         <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border, #e2e8f0)', marginBottom: '16px' }}>
-          <img src={current.gif} alt={current.title} style={{ width: '100%', display: 'block' }} />
+          <img src={current.gif} alt={current.label} style={{ width: '100%', display: 'block' }} />
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -550,7 +550,7 @@ export function ClassTour({ activeNav }: { activeNav: number }) {
         </p>
 
         <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border, #e2e8f0)', marginBottom: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-          <img src={current.gif} alt={current.title} style={{ width: '100%', display: 'block' }} />
+          <img src={current.gif} alt={current.label} style={{ width: '100%', display: 'block' }} />
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
