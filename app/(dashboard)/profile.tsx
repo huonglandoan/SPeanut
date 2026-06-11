@@ -285,6 +285,15 @@ export default function ProfileView({ activeNav }: ProfileViewProps) {
         bank_owner: bankOwner,
         qr_code: qrCode,
       });
+      // Reload lại từ DB để xác nhận dữ liệu đã được lưu thành công
+      const freshData = await fetchProfile();
+      setAvatar(freshData.avatar || '/avatar.png');
+      setFullName(freshData.full_name || '');
+      setEmail(freshData.email || '');
+      setBankBrand(freshData.bank_brand || '');
+      setBankNumber(freshData.bank_number || '');
+      setBankOwner(freshData.bank_owner || '');
+      setQrCode(freshData.qr_code || '/default_qr.png');
       setIsEditModalOpen(false);
       setToastMessage('Đã lưu thay đổi thành công!');
       setShowToast(true);
