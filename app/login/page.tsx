@@ -69,61 +69,68 @@ export default function LoginPage() {
     }
   };
 
-return (
-  <div className={styles.authCard}>
-    
-  
-        {/* 1. Thanh gạt viên thuốc trượt mượt mà đồng bộ với trang Login */}
-  <div className={styles.switchContainer}>
-    <div className={styles.slider} />
-    <button type="button" className={styles.switchBtn} onClick={() => handleToggleTheme('light')}>☀️</button>
-    <button type="button" className={styles.switchBtn} onClick={() => handleToggleTheme('dark')}>🌙</button>
-  </div>
+  return (
+    <div className={styles.authCard}>
 
-  {/* 2. Tiêu đề Đăng nhập */}
 
-    <p className={styles.authTitle}>Đăng nhập</p>
-
-    <form onSubmit={handleSubmit}>
-      
-      {/*Email hoặc Tên đăng nhập*/}
-      <div className={styles.fieldPanel}>
-        <input
-          type="text"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email hoặc Tên đăng nhập" 
-          className={styles.fieldInput}
-        />
+      {/* 1. Thanh gạt viên thuốc trượt mượt mà đồng bộ với trang Login */}
+      <div className={styles.switchContainer}>
+        <div className={styles.slider} />
+        <button type="button" className={styles.switchBtn} onClick={() => handleToggleTheme('light')}>☀️</button>
+        <button type="button" className={styles.switchBtn} onClick={() => handleToggleTheme('dark')}>🌙</button>
       </div>
 
-      {/* Ô nhập Mật khẩu */}
-      <div className={styles.fieldPanel}>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Mật khẩu"
-          className={styles.fieldInput}
-        />
-      </div>
+      {/* 2. Tiêu đề Đăng nhập */}
 
-      {error && <div className={styles.feedbackError}>{error}</div>}
-      {success && <div className={styles.feedbackSuccess}>{success}</div>}
-      
-      <div className={styles.actionGroup}></div>
-      
-      <button type="submit" disabled={loading} className={styles.buttonPrimary}>
-        {loading ? 'Đang tải...' : 'Đăng nhập'}
-      </button>
+      <p className={styles.authTitle}>Đăng nhập</p>
 
-      <p className={styles.textMuted}>
-        Chưa có tài khoản?{' '}
-        <Link href="/register" className={styles.linkInline}>
-          Đăng ký ngay
-        </Link>
-      </p>
-    </form>
-  </div>
-);
+      <form onSubmit={handleSubmit}>
+
+        {/*Email hoặc Tên đăng nhập*/}
+        <div className={styles.fieldPanel}>
+          <input
+            type="text"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email hoặc Tên đăng nhập"
+            className={styles.fieldInput}
+          />
+        </div>
+
+        {/* Ô nhập Mật khẩu */}
+        <div className={styles.fieldPanel}>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Mật khẩu"
+            className={styles.fieldInput}
+          />
+        </div>
+
+        {error && <div className={styles.feedbackError}>{error}</div>}
+        {success && <div className={styles.feedbackSuccess}>{success}</div>}
+
+        <div className={styles.actionGroup}></div>
+
+        <button type="submit" disabled={loading} className={styles.buttonPrimary}>
+          {loading ? 'Đang tải...' : 'Đăng nhập'}
+        </button>
+
+        <p className={styles.textMuted}>
+          Chưa có tài khoản?{' '}
+          <Link href="/register" className={styles.linkInline}>
+            Đăng ký ngay
+          </Link>
+        </p>
+
+        <p className={styles.textMuted} style={{ marginTop: '12px', fontSize: '12px' }}>
+          Thiết lập hệ thống?{' '}
+          <Link href="/deploy" style={{ color: 'var(--primary, #735bf2)', fontWeight: 600, textDecoration: 'none' }}>
+            Cấu hình & Deploy
+          </Link>
+        </p>
+      </form>
+    </div>
+  );
 } 

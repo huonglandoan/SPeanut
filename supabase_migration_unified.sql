@@ -104,11 +104,8 @@ CREATE TABLE public.admin_audit_logs (
 -- TẠO CÁC CHỈ MỤC (Indexes) ĐỂ TỐI ƯU TỐC ĐỘ TRUY VẤN
 -- ============================================================================
 CREATE INDEX idx_users_email ON public.users(email);
-CREATE INDEX idx_classes_user ON public.classes(user_id);
 CREATE INDEX idx_schedules_class ON public.class_schedules(class_id);
 CREATE INDEX idx_logs_class_date ON public.teaching_logs(class_id, date);
-CREATE INDEX idx_audit_logs_target_user ON public.admin_audit_logs(target_user_id);
-CREATE INDEX idx_audit_logs_admin ON public.admin_audit_logs(admin_id);
 
 -- ============================================================================
 -- THIẾT LẬP BẢO MẬT HÀNG (Row Level Security - RLS) CHO TẤT CẢ CÁC BẢNG
@@ -218,7 +215,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Gắn trigger vào bảng users
 CREATE TRIGGER trigger_log_admin_extra_incomes_changes
@@ -261,7 +258,7 @@ BEGIN
   END IF;
   RETURN NULL;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE TRIGGER trigger_log_classes_changes
   AFTER INSERT OR DELETE ON public.classes
@@ -299,7 +296,7 @@ BEGIN
   END IF;
   RETURN NULL;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE TRIGGER trigger_log_users_changes
   AFTER INSERT OR DELETE ON public.users
@@ -330,7 +327,6 @@ CREATE OR REPLACE FUNCTION public.get_admin_dashboard_data()
 RETURNS JSON
 LANGUAGE plpgsql
 SECURITY DEFINER -- Thực thi với đặc quyền cao để vượt qua RLS của bảng users
-SET search_path = public
 AS $$
 DECLARE
   result JSON;

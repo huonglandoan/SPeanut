@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchProfile, updateProfile } from '../services/profile'
 import profileStyles from '../styles/Profile.module.css'
-import { Edit3, X, Upload, LogOut, Loader2 } from "lucide-react"
+import { Edit3, X, Upload, LogOut, Loader2, HelpCircle } from "lucide-react"
 import Image from 'next/image'
 import { PeanutLoader } from '../components/Loader'
+import { GuideModal } from '../components/Guide'
 
 const sanitizeBankOwner = (str: string): string => {
   if (!str) return "";
@@ -24,9 +25,10 @@ const sanitizeBankNumber = (str: string): string => {
 
 interface ProfileViewProps {
   activeNav: number;
+  setActiveNav?: React.Dispatch<React.SetStateAction<number>>;
 }
 
-export default function ProfileView({ activeNav }: ProfileViewProps) {
+export default function ProfileView({ activeNav, setActiveNav }: ProfileViewProps) {
   // States for Profile information
   const [avatar, setAvatar] = useState('/avatar.png');
   const [fullName, setFullName] = useState('');
@@ -41,6 +43,7 @@ export default function ProfileView({ activeNav }: ProfileViewProps) {
   const [saving, setSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [canEdit, setCanEdit] = useState(false);
+  const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
 
   // States for Avatar Cropping
   const [tempAvatarSrc, setTempAvatarSrc] = useState<string | null>(null);
@@ -602,6 +605,15 @@ export default function ProfileView({ activeNav }: ProfileViewProps) {
 
         <button
           type="button"
+          onClick={() => setIsGuideModalOpen(true)}
+          className={profileStyles.guideBtn}
+        >
+          <HelpCircle size={18} />
+          Peanut Hướng dẫn sử dụng
+        </button>
+
+        <button
+          type="button"
           onClick={() => supabase.auth.signOut()}
           className={profileStyles.signOutBtn}
         >
@@ -876,6 +888,12 @@ export default function ProfileView({ activeNav }: ProfileViewProps) {
           </div>
         </div>
       )}
+
+      <GuideModal
+        isOpen={isGuideModalOpen}
+        onClose={() => setIsGuideModalOpen(false)}
+        setActiveNav={setActiveNav}
+      />
 
       </>
       )}

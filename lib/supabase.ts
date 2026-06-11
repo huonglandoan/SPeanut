@@ -6,8 +6,8 @@ const ENV_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const ENV_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 // Khởi tạo client mặc định dùng env vars thật
-const defaultSupabase = typeof window !== 'undefined' 
-  ? createBrowserClient(ENV_URL, ENV_KEY) 
+const defaultSupabase = typeof window !== 'undefined'
+  ? createBrowserClient(ENV_URL, ENV_KEY)
   : (null as any);
 
 // Hàm lấy client đang hoạt động (tùy biến từ localStorage hoặc mặc định)
@@ -45,28 +45,44 @@ if (typeof window !== 'undefined') {
   window.fetch = async (input, init) => {
     const customUrl = localStorage.getItem('speanut_config_supabase_url');
     const customAnonKey = localStorage.getItem('speanut_config_supabase_anon_key');
-    
+
     if (customUrl && customAnonKey) {
-      init = init || {};
-      let headersObj: Record<string, string> = {};
-      
-      if (init.headers) {
-        if (init.headers instanceof Headers) {
-          init.headers.forEach((value, key) => {
-            headersObj[key] = value;
-          });
-        } else if (Array.isArray(init.headers)) {
-          init.headers.forEach(([key, value]) => {
-            headersObj[key] = value;
-          });
-        } else {
-          headersObj = { ...init.headers } as Record<string, string>;
-        }
+      let urlStr = '';
+      if (typeof input === 'string') {
+        urlStr = input;
+      } else if (input && (input as any).url) {
+        urlStr = (input as any).url;
+      } else if (input && typeof input.toString === 'function') {
+        urlStr = input.toString();
       }
-      
-      headersObj['x-supabase-url'] = customUrl;
-      headersObj['x-supabase-anon-key'] = customAnonKey;
-      init.headers = headersObj;
+
+      const isSameOrigin = !urlStr || 
+                           urlStr.startsWith('/') || 
+                           urlStr.startsWith(window.location.origin) || 
+                           !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(urlStr);
+
+      if (isSameOrigin) {
+        init = init || {};
+        let headersObj: Record<string, string> = {};
+
+        if (init.headers) {
+          if (init.headers instanceof Headers) {
+            init.headers.forEach((value, key) => {
+              headersObj[key] = value;
+            });
+          } else if (Array.isArray(init.headers)) {
+            init.headers.forEach(([key, value]) => {
+              headersObj[key] = value;
+            });
+          } else {
+            headersObj = { ...init.headers } as Record<string, string>;
+          }
+        }
+
+        headersObj['x-supabase-url'] = customUrl;
+        headersObj['x-supabase-anon-key'] = customAnonKey;
+        init.headers = headersObj;
+      }
     }
     return originalFetch(input, init);
   };

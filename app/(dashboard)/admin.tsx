@@ -62,12 +62,12 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
         setLoading(true);
         const res = await fetch('/api/admin/dashboard');
         const data = await res.json();
-        
+
         if (!res.ok) {
           throw new Error(data.error || 'Không thể tải dữ liệu admin.');
         }
 
-        const filteredUsers = (data.users || []).filter((u: any) => 
+        const filteredUsers = (data.users || []).filter((u: any) =>
           u.email !== 'admin@speanut.com' && u.email !== '111111@speanut.com'
         );
         setUsers(filteredUsers);
@@ -212,7 +212,7 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
       const dateObj = new Date(targetYear, targetMonth - 1, d);
       const dow = dateObj.getDay();
 
-      const activeScheds = userSchedules.filter((s: any) => 
+      const activeScheds = userSchedules.filter((s: any) =>
         s.day_of_week === dow &&
         s.valid_from <= cellDateStr &&
         (s.valid_to === null || cellDateStr <= s.valid_to)
@@ -330,7 +330,7 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
       .forEach(cls => {
         const classCode = (cls.short_name || '').trim().toUpperCase() || cls.name.trim();
         const { typicalScheds, signature } = classSchedulesMap[cls.id] || { typicalScheds: [], signature: '' };
-        
+
         // Grouping key: classCode + signature
         const groupKey = `${classCode}#${signature}`;
 
@@ -362,8 +362,8 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
         typicalSchedules: item.typicalSchedules
       };
     })
-    .filter(c => !hiddenClassKeys.includes(c.classKey) && !hiddenUserIds.includes(c.user_id))
-    .sort((a, b) => b.id - a.id);
+      .filter(c => !hiddenClassKeys.includes(c.classKey) && !hiddenUserIds.includes(c.user_id))
+      .sort((a, b) => b.id - a.id);
   }, [classes, schedules, hiddenClassKeys, hiddenUserIds]);
 
   // Filter typical classes for the selected teacher
@@ -387,17 +387,17 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
 
   // Compile estimated monthly thù lao summary for sidebar / payroll table
   const userSalaries = useMemo(() => {
-    const map: Record<string, { 
-      totalSalary: number; 
-      totalExtra: number; 
-      totalEarnings: number; 
-      totalActive: number; 
-      classesCount: number 
+    const map: Record<string, {
+      totalSalary: number;
+      totalExtra: number;
+      totalEarnings: number;
+      totalActive: number;
+      classesCount: number
     }> = {};
 
     visibleUsers.forEach(u => {
       const stats = calculateUserStats(u.id, year, month);
-      
+
       let totalExtra = 0;
       if (u.extra_incomes && typeof u.extra_incomes === 'object') {
         const dbKey = `${year}_${month}`;
@@ -442,7 +442,7 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
     };
 
     const headers = ["Ho ten", "Buoi day", "Luong", "Them", "Tong nhan", "Ngan hang", "STK", "Chu tai khoan"];
-    
+
     const rows = visibleUsers.map((u) => {
       const stats = userSalaries[u.id] || { totalSalary: 0, totalExtra: 0, totalEarnings: 0, totalActive: 0 };
       const bankBrand = u.bank_brand || '';
@@ -468,127 +468,13 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
 
     const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    
+
     const link = document.createElement("a");
     link.setAttribute("href", url);
     link.setAttribute("download", `Bang_luong_tong_hop_thang_${month}_${year}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  const exportAllPayrollsToPDF = async () => {
-    try {
-      const html2canvas = (await import('html2canvas')).default;
-      const { jsPDF } = await import('jspdf');
-
-      const printContainer = document.createElement('div');
-      printContainer.style.position = 'absolute';
-      printContainer.style.left = '-9999px';
-      printContainer.style.top = '-9999px';
-      printContainer.style.width = '800px';
-      printContainer.style.padding = '35px';
-      printContainer.style.boxSizing = 'border-box';
-      printContainer.style.backgroundColor = '#ffffff';
-      printContainer.style.color = '#1E293B';
-      printContainer.style.fontFamily = 'system-ui, -apple-system, sans-serif';
-
-      printContainer.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 25px; border-bottom: 1px solid #E2E8F0; padding-bottom: 15px;">
-          <img src="/peanut.png" style="width: 28px; height: 28px; object-fit: contain;" alt="SPeanut logo" />
-          <span style="font-size: 20px; font-weight: 800; color: #735BF2; letter-spacing: 0.5px;">SPeanut</span>
-        </div>
-
-        <div style="text-align: center; margin-bottom: 25px;">
-          <h2 style="margin: 0; font-size: 18px; font-weight: 700; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px;">BẢNG LƯƠNG TỔNG HỢP GIA SƯ</h2>
-          <p style="margin: 4px 0 0 0; font-size: 12px; color: #64748B; font-weight: 600;">Tháng ${month} / Năm ${year}</p>
-        </div>
-
-        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 11px;">
-          <thead>
-            <tr style="background-color: #735BF2; color: #ffffff;">
-              <th style="padding: 10px 8px; border: 1px solid #735BF2; font-weight: 600; text-align: center; font-size: 10px; text-transform: uppercase;">STT</th>
-              <th style="padding: 10px 8px; border: 1px solid #735BF2; font-weight: 600; font-size: 10px; text-transform: uppercase;">Họ tên gia sư / Email</th>
-              <th style="padding: 10px 8px; border: 1px solid #735BF2; font-weight: 600; text-align: center; font-size: 10px; text-transform: uppercase;">Số buổi</th>
-              <th style="padding: 10px 8px; border: 1px solid #735BF2; font-weight: 600; text-align: right; font-size: 10px; text-transform: uppercase;">Lương cứng</th>
-              <th style="padding: 10px 8px; border: 1px solid #735BF2; font-weight: 600; text-align: right; font-size: 10px; text-transform: uppercase;">Thưởng thêm</th>
-              <th style="padding: 10px 8px; border: 1px solid #735BF2; font-weight: 600; text-align: right; font-size: 10px; text-transform: uppercase;">Tổng nhận</th>
-              <th style="padding: 10px 8px; border: 1px solid #735BF2; font-weight: 600; font-size: 10px; text-transform: uppercase;">Thông tin chuyển khoản</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${visibleUsers.map((u, idx) => {
-              const stats = userSalaries[u.id] || { totalSalary: 0, totalExtra: 0, totalEarnings: 0, totalActive: 0 };
-              const bankText = u.bank_brand ? `${u.bank_owner}<br/><span style="color: #64748B; font-size: 9.5px;">STK: ${u.bank_number} (${u.bank_brand})</span>` : '<span style="font-style: italic; color: #94A3B8;">Chưa liên kết</span>';
-              return `
-                <tr style="background-color: ${idx % 2 === 0 ? '#ffffff' : '#F8FAFC'};">
-                  <td style="padding: 10px 8px; border: 1px solid #E2E8F0; text-align: center; font-weight: 600; color: #475569;">${idx + 1}</td>
-                  <td style="padding: 10px 8px; border: 1px solid #E2E8F0; font-weight: 600; color: #0F172A;">
-                    <div>${u.full_name || 'Chưa đặt tên'}</div>
-                    <div style="font-size: 9px; color: #64748B; font-weight: 400;">${u.email}</div>
-                  </td>
-                  <td style="padding: 10px 8px; border: 1px solid #E2E8F0; text-align: center; font-weight: 600; color: #334155;">${stats.totalActive} buổi</td>
-                  <td style="padding: 10px 8px; border: 1px solid #E2E8F0; text-align: right; color: #334155;">${stats.totalSalary.toLocaleString()}đ</td>
-                  <td style="padding: 10px 8px; border: 1px solid #E2E8F0; text-align: right; color: #10B981; font-weight: 600;">+${stats.totalExtra.toLocaleString()}đ</td>
-                  <td style="padding: 10px 8px; border: 1px solid #E2E8F0; text-align: right; font-weight: 700; color: #735BF2;">${stats.totalEarnings.toLocaleString()}đ</td>
-                  <td style="padding: 10px 8px; border: 1px solid #E2E8F0; color: #0F172A; line-height: 1.3;">${bankText}</td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-      `;
-
-      document.body.appendChild(printContainer);
-
-      // Wait for logo image to load to guarantee it is rendered in canvas
-      await new Promise(resolve => {
-        const img = printContainer.querySelector('img');
-        if (img) {
-          if (img.complete) {
-            resolve(true);
-          } else {
-            img.onload = () => resolve(true);
-            img.onerror = () => resolve(true);
-          }
-        } else {
-          resolve(true);
-        }
-      });
-
-      const canvas = await html2canvas(printContainer, {
-        scale: 2.2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false
-      });
-
-      document.body.removeChild(printContainer);
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210;
-      const pageHeight = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-      heightLeft -= pageHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save(`Bang_luong_tong_hop_thang_${month}_${year}.pdf`);
-    } catch (err) {
-      console.error('Error generating PDF:', err);
-      alert('Đã xảy ra lỗi khi tạo file PDF. Vui lòng thử lại.');
-    }
   };
 
   const MONTHS = [
@@ -606,9 +492,9 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
         </div>
         <div className={styles.headerRight}>
           {(hiddenUserIds.length > 0 || hiddenClassKeys.length > 0) && (
-            <button 
-              onClick={handleResetHidden} 
-              className={styles.adminLogoutBtn} 
+            <button
+              onClick={handleResetHidden}
+              className={styles.adminLogoutBtn}
               style={{ color: 'var(--primary, #735BF2)', borderColor: 'rgba(115, 91, 242, 0.2)', marginRight: '8px' }}
             >
               Hiện lại đã ẩn ({hiddenUserIds.length + hiddenClassKeys.length})
@@ -623,6 +509,13 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
               <ChevronRight size={18} />
             </button>
           </div>
+          <button
+            onClick={() => { window.location.href = '/deploy'; }}
+            className={styles.adminLogoutBtn}
+            style={{ marginRight: '8px', color: '#00b383', borderColor: 'rgba(0, 179, 131, 0.2)' }}
+          >
+            Cấu hình Deploy
+          </button>
           <button onClick={handleLogout} className={styles.adminLogoutBtn}>
             Đăng xuất
           </button>
@@ -631,29 +524,29 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
 
       {/* Tab Navigation */}
       <nav className={styles.tabContainer} aria-label="Tab navigation">
-        <button 
-          className={`${styles.tabBtn} ${activeTab === 'payroll' ? styles.tabBtnActive : ''}`} 
+        <button
+          className={`${styles.tabBtn} ${activeTab === 'payroll' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('payroll')}
         >
           <Wallet size={16} style={{ marginRight: '6px', display: 'inline', verticalAlign: 'middle' }} />
           Bảng lương theo tháng
         </button>
-        <button 
-          className={`${styles.tabBtn} ${activeTab === 'teachers' ? styles.tabBtnActive : ''}`} 
+        <button
+          className={`${styles.tabBtn} ${activeTab === 'teachers' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('teachers')}
         >
           <User size={16} style={{ marginRight: '6px', display: 'inline', verticalAlign: 'middle' }} />
           Giáo viên
         </button>
-        <button 
-          className={`${styles.tabBtn} ${activeTab === 'classes' ? styles.tabBtnActive : ''}`} 
+        <button
+          className={`${styles.tabBtn} ${activeTab === 'classes' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('classes')}
         >
           <BookOpen size={16} style={{ marginRight: '6px', display: 'inline', verticalAlign: 'middle' }} />
           Danh sách lớp hiện có
         </button>
-        <button 
-          className={`${styles.tabBtn} ${activeTab === 'audit_logs' ? styles.tabBtnActive : ''}`} 
+        <button
+          className={`${styles.tabBtn} ${activeTab === 'audit_logs' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('audit_logs')}
         >
           <Calendar size={16} style={{ marginRight: '6px', display: 'inline', verticalAlign: 'middle' }} />
@@ -686,11 +579,7 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                   />
                   <button type="button" onClick={exportAllPayrollsToCSV} className={styles.exportAllBtn}>
                     <Download size={16} />
-                    Excel
-                  </button>
-                  <button type="button" onClick={exportAllPayrollsToPDF} className={styles.exportPdfBtn}>
-                    <Download size={16} />
-                    PDF
+                    Tải xuống Excel (CSV)
                   </button>
                 </div>
               </div>
@@ -719,12 +608,12 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                             <td>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <div style={{ position: 'relative', width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
-                                  <Image 
-                                    src={u.avatar || '/avatar.png'} 
+                                  <Image
+                                    src={u.avatar || '/avatar.png'}
                                     unoptimized
                                     fill
                                     style={{ objectFit: 'cover' }}
-                                    alt={u.full_name || 'Avatar'} 
+                                    alt={u.full_name || 'Avatar'}
                                   />
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -737,7 +626,7 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                             <td style={{ fontWeight: '700', color: 'var(--foreground)' }}>
                               {stats.totalSalary.toLocaleString()}đ
                             </td>
-                            <td 
+                            <td
                               style={{ fontWeight: '700', color: '#00B383', cursor: 'pointer', textDecoration: 'underline' }}
                               title="Click để xem chi tiết / chỉnh sửa khoản thêm"
                               onClick={() => {
@@ -757,8 +646,8 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                               {u.qr_code ? (
                                 <div className={styles.payrollQrCol}>
                                   <div style={{ position: 'relative', width: '44px', height: '44px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => window.open(u.qr_code, '_blank')} title="Click để xem ảnh to">
-                                    <Image 
-                                      src={u.qr_code} 
+                                    <Image
+                                      src={u.qr_code}
                                       unoptimized
                                       fill
                                       style={{ objectFit: 'cover' }}
@@ -829,12 +718,12 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                         onClick={() => setSelectedUserId(u.id)}
                       >
                         <div style={{ position: 'relative', width: '44px', height: '44px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
-                          <Image 
-                            src={u.avatar || '/avatar.png'} 
+                          <Image
+                            src={u.avatar || '/avatar.png'}
                             unoptimized
                             fill
                             style={{ objectFit: 'cover' }}
-                            alt={u.full_name || 'Avatar'} 
+                            alt={u.full_name || 'Avatar'}
                           />
                         </div>
                         <div className={styles.userMeta}>
@@ -857,8 +746,8 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                     {/* Profile Section */}
                     <section className={styles.profileSection}>
                       <div style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
-                        <Image 
-                          src={selectedUser.avatar || '/avatar.png'} 
+                        <Image
+                          src={selectedUser.avatar || '/avatar.png'}
                           unoptimized
                           fill
                           style={{ objectFit: 'cover' }}
@@ -870,7 +759,7 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                           {selectedUser.full_name || 'Chưa cập nhật tên'}
                         </h2>
                         <p className={styles.adminSubtitle}>{selectedUser.email}</p>
-                        
+
                         <div className={styles.infoGrid}>
                           <div className={styles.infoItem}>
                             <span className={styles.infoLabel}>Ngân hàng</span>
@@ -888,8 +777,8 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                       </div>
                       {selectedUser.qr_code && (
                         <div style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '12px', overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => window.open(selectedUser.qr_code, '_blank')} title="Click để phóng to mã QR">
-                          <Image 
-                            src={selectedUser.qr_code} 
+                          <Image
+                            src={selectedUser.qr_code}
                             unoptimized
                             fill
                             style={{ objectFit: 'cover' }}
@@ -898,7 +787,7 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                         </div>
                       )}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <button 
+                        <button
                           onClick={() => handleHideTeacher(selectedUser.id, selectedUser.full_name || 'Chưa đặt tên')}
                           className={styles.adminDeleteBtn}
                           title="Ẩn giáo viên này khỏi danh sách hiển thị"
@@ -914,18 +803,18 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                       const extraList = (selectedUser.extra_incomes && typeof selectedUser.extra_incomes === 'object')
                         ? selectedUser.extra_incomes[dbKey]
                         : null;
-                      
+
                       const list = Array.isArray(extraList) ? extraList : [];
-                      
+
                       return (
                         <section style={{ borderTop: '1px solid var(--border)', paddingTop: '24px', marginTop: '8px' }}>
                           <h3 className={styles.sectionTitle} style={{ marginBottom: '16px' }}>Các khoản thu thêm khác ({list.length})</h3>
                           {list.length > 0 ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
                               {list.map((item: any) => (
-                                <div key={item.id} style={{ 
-                                  display: 'flex', 
-                                  justifyContent: 'space-between', 
+                                <div key={item.id} style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
                                   alignItems: 'center',
                                   padding: '12px 16px',
                                   borderRadius: '12px',
@@ -973,7 +862,7 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                                     <span className={styles.teacherBadge} title={teachersEmails}>
                                       GV: {teachersNames}
                                     </span>
-                                    <button 
+                                    <button
                                       onClick={() => handleHideClass(cls.classKey, cls.name)}
                                       className={styles.classDeleteBtn}
                                       title="Ẩn lớp học này khỏi danh sách hiển thị"
@@ -1033,7 +922,7 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
           {activeTab === 'classes' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <h2 className={styles.sectionTitle}>Tất cả lớp học trong hệ thống ({typicalClasses.length})</h2>
-              
+
               <div className={styles.classesGrid}>
                 {typicalClasses.length > 0 ? (
                   typicalClasses.map(cls => {
@@ -1044,7 +933,7 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                     const teachersNames = teachers.map((t: any) => t.full_name || 'N/A').join(', ');
                     const teachersEmails = teachers.map((t: any) => t.email || '').join('\n');
                     const classScheds = cls.typicalSchedules || [];
-                    
+
                     return (
                       <article key={cls.id} className={styles.adminClassCard}>
                         <div className={styles.classCardHeader}>
@@ -1058,7 +947,7 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                             <span className={styles.teacherBadge} title={teachersEmails}>
                               GV: {teachersNames}
                             </span>
-                            <button 
+                            <button
                               onClick={() => handleHideClass(cls.classKey, cls.name)}
                               className={styles.classDeleteBtn}
                               title="Ẩn lớp học này khỏi danh sách hiển thị"
@@ -1190,14 +1079,14 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                           const oldVal = log.old_value || {};
                           const newVal = log.new_value || {};
                           const keys = Array.from(new Set([...Object.keys(oldVal), ...Object.keys(newVal)]));
-                          
+
                           return (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
                               {keys.map(key => {
                                 const oldItems: any[] = oldVal[key] || [];
                                 const newItems: any[] = newVal[key] || [];
                                 if (JSON.stringify(oldItems) === JSON.stringify(newItems)) return null;
-                                
+
                                 const oldMap = new Map<string, any>();
                                 oldItems.forEach(item => {
                                   const itemId = item.id || item.name;
@@ -1301,12 +1190,12 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                             <td style={{ padding: '12px 16px', fontSize: '13px', fontWeight: '500' }}>{log.admin_email}</td>
                             <td style={{ padding: '12px 16px', fontSize: '13px' }}>{log.target_user_email}</td>
                             <td style={{ padding: '12px 16px', fontSize: '13px' }}>
-                              <span style={{ 
+                              <span style={{
                                 ...badgeStyle,
-                                padding: '4px 8px', 
-                                borderRadius: '9999px', 
-                                fontSize: '11px', 
-                                fontWeight: '700' 
+                                padding: '4px 8px',
+                                borderRadius: '9999px',
+                                fontSize: '11px',
+                                fontWeight: '700'
                               }}>
                                 {getActionLabel(log.action)}
                               </span>
@@ -1329,7 +1218,7 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
       {isExtraModalOpen && (() => {
         const targetUser = users.find(u => u.id === selectedExtraUserId);
         const targetUserName = targetUser?.full_name || 'Giáo viên';
-        
+
         const handleAddTempExtra = (e: React.FormEvent) => {
           e.preventDefault();
           if (!newExtraName.trim() || !newExtraAmount) return;
@@ -1354,7 +1243,7 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
             // Prompt nhập lý do từ chối
             const reason = prompt("Nhập lý do từ chối/xóa khoản này (gia sư sẽ nhìn thấy lý do này):", "Không hợp lệ");
             if (reason === null) return; // Người dùng nhấn Cancel
-            
+
             const updated = tempExtraList.map(x => {
               if (x.id === id) {
                 return {
@@ -1422,15 +1311,15 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
         return (
           <div className={styles.modalOverlay} onClick={() => setIsExtraModalOpen(false)}>
             <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <button 
-                type="button" 
-                className={styles.closeBtn} 
+              <button
+                type="button"
+                className={styles.closeBtn}
                 onClick={() => setIsExtraModalOpen(false)}
                 title="Đóng"
               >
                 ✕
               </button>
-              
+
               <div>
                 <h3 className={styles.sectionTitle} style={{ fontSize: '18px', marginBottom: '4px' }}>Chi tiết khoản thêm</h3>
                 <p className={styles.adminSubtitle}>{targetUserName} • Tháng {month}/{year}</p>
@@ -1440,24 +1329,24 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
               <form onSubmit={handleAddTempExtra} style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px', border: '1px solid var(--border)', borderRadius: '16px', backgroundColor: 'var(--muted)' }}>
                 <span style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--muted-foreground)' }}>Thêm khoản mới</span>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  <input 
-                    type="text" 
-                    placeholder="Tên khoản (VD: Phụ cấp, Thưởng...)" 
+                  <input
+                    type="text"
+                    placeholder="Tên khoản (VD: Phụ cấp, Thưởng...)"
                     value={newExtraName}
                     onChange={(e) => setNewExtraName(e.target.value)}
                     className={styles.searchInput}
                     style={{ flex: 1, minWidth: '150px', fontSize: '13px', padding: '6px 12px' }}
                   />
-                  <input 
-                    type="number" 
-                    placeholder="Số tiền..." 
+                  <input
+                    type="number"
+                    placeholder="Số tiền..."
                     value={newExtraAmount}
                     onChange={(e) => setNewExtraAmount(e.target.value)}
                     className={styles.searchInput}
                     style={{ width: '100px', fontSize: '13px', padding: '6px 12px' }}
                   />
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     style={{
                       padding: '6px 14px',
                       backgroundColor: 'var(--primary, #735BF2)',
@@ -1487,9 +1376,9 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                     return (
                       <div key={item.id || idx} style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '8px', border: isRejected ? '1px dashed #ff3b30' : '1px solid var(--border)', borderRadius: '8px', backgroundColor: isRejected ? 'rgba(255, 59, 48, 0.05)' : 'transparent' }}>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          <input 
-                            type="text" 
-                            value={item.name} 
+                          <input
+                            type="text"
+                            value={item.name}
                             disabled={isRejected}
                             onChange={(e) => {
                               const updated = [...tempExtraList];
@@ -1497,18 +1386,18 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                               setTempExtraList(updated);
                             }}
                             className={styles.searchInput}
-                            style={{ 
-                              flex: 1, 
-                              minWidth: '100px', 
-                              fontSize: '13.5px', 
+                            style={{
+                              flex: 1,
+                              minWidth: '100px',
+                              fontSize: '13.5px',
                               padding: '6px 12px',
                               textDecoration: isRejected ? 'line-through' : 'none',
                               color: isRejected ? '#ff3b30' : 'inherit'
                             }}
                           />
-                          <input 
-                            type="number" 
-                            value={item.amount} 
+                          <input
+                            type="number"
+                            value={item.amount}
                             disabled={isRejected}
                             onChange={(e) => {
                               const updated = [...tempExtraList];
@@ -1516,10 +1405,10 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                               setTempExtraList(updated);
                             }}
                             className={styles.searchInput}
-                            style={{ 
-                              width: '110px', 
-                              minWidth: '110px', 
-                              fontSize: '13.5px', 
+                            style={{
+                              width: '110px',
+                              minWidth: '110px',
+                              fontSize: '13.5px',
                               padding: '6px 12px',
                               textDecoration: isRejected ? 'line-through' : 'none',
                               color: isRejected ? '#ff3b30' : 'inherit'
@@ -1527,8 +1416,8 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                           />
                           {isRejected ? (
                             <>
-                              <button 
-                                type="button" 
+                              <button
+                                type="button"
                                 onClick={() => handleRestoreTempExtra(item.id)}
                                 style={{
                                   padding: '6px 12px',
@@ -1543,8 +1432,8 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                               >
                                 Khôi phục
                               </button>
-                              <button 
-                                type="button" 
+                              <button
+                                type="button"
                                 onClick={() => handleDeleteTempExtra(item.id)}
                                 style={{
                                   padding: '6px 12px',
@@ -1561,8 +1450,8 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                               </button>
                             </>
                           ) : (
-                            <button 
-                              type="button" 
+                            <button
+                              type="button"
                               onClick={() => handleDeleteTempExtra(item.id)}
                               style={{
                                 padding: '6px 12px',
@@ -1592,8 +1481,8 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
 
               {/* Action buttons */}
               <div style={{ display: 'flex', gap: '12px', borderTop: '1px solid var(--border)', paddingTop: '16px', marginTop: '4px' }}>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setIsExtraModalOpen(false)}
                   style={{
                     flex: 1,
@@ -1609,8 +1498,8 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                 >
                   Hủy
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={handleSaveExtraIncomes}
                   disabled={isSavingExtra}
                   style={{

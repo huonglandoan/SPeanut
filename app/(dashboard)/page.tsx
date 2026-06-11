@@ -117,7 +117,7 @@ export default function DashboardPage() {
         />
       </div>
       <div style={{ display: activeNav === 3 ? 'block' : 'none', width: '100%' }}>
-        <ProfileView activeNav={activeNav} />
+        <ProfileView activeNav={activeNav} setActiveNav={setActiveNav} />
       </div>
     </div>
 

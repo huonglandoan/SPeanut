@@ -1,9 +1,10 @@
-import {useState, useEffect, useMemo} from 'react'
-import {createPortal} from 'react-dom'
+import { useState, useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import styles from '../styles/Calendar.module.css'
-import {ChevronLeft, ChevronRight} from "lucide-react";
-import {SkeletonCard} from '../components/Loader';
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { SkeletonCard } from '../components/Loader';
 import { fetchProfile, updateProfile } from '../services/profile';
+import { InteractiveTour } from '../components/Guide'
 
 declare global {
   interface Window {
@@ -20,18 +21,18 @@ interface CalendarViewProps {
   setSelected: React.Dispatch<React.SetStateAction<number>>;
 }
 
-interface DayInfo{
+interface DayInfo {
   day: number,
   month: number,
   year: number,
   isCurrentMonth: boolean
 }
-interface CalEvent{
+interface CalEvent {
   id: number,
   title: string,
   subtitle: string,
   time: string,
-  color: string, 
+  color: string,
   hasViewMore?: boolean
 }
 
@@ -50,18 +51,18 @@ function getClassColor(classId: number, type?: 'FIXED' | 'EXTRA') {
   return '#FFB000'; // Vàng cho các lớp Extra hoặc linh hoạt
 }
 
-function buildCalendar(year: number, month: number): DayInfo[]{
+function buildCalendar(year: number, month: number): DayInfo[] {
   const first = new Date(year, month - 1, 1)
   const daysInMonth = new Date(year, month, 0).getDate()
   const prevLastDay = new Date(year, month - 1, 0).getDate()
   const offset = (first.getDay() + 6) % 7; // Mon = 0
 
-  const res : DayInfo[] =  []
+  const res: DayInfo[] = []
   const pm = month === 1 ? 12 : month - 1
   const py = month === 1 ? year - 1 : year
 
   for (let i = offset - 1; i >= 0; --i)
-    res.push({day: prevLastDay - i, month: pm, year: py, isCurrentMonth: false})
+    res.push({ day: prevLastDay - i, month: pm, year: py, isCurrentMonth: false })
 
   for (let d = 1; d <= daysInMonth; d++)
     res.push({ day: d, month, year, isCurrentMonth: true })
@@ -123,15 +124,15 @@ function EventCard({ ev, onClick }: { ev: any; onClick?: () => void }) {
   );
 }
 
-export default function CalendarView({ 
-  year = new Date().getFullYear(), 
-  setYear, 
-  month = new Date().getMonth() + 1, 
-  setMonth, 
-  selected = new Date().getDate(), 
+export default function CalendarView({
+  year = new Date().getFullYear(),
+  setYear,
+  month = new Date().getMonth() + 1,
+  setMonth,
+  selected = new Date().getDate(),
   setSelected,
   activeNav
-}: any){
+}: any) {
   const [schedules, setSchedules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -196,35 +197,49 @@ export default function CalendarView({
       const dateObj = new Date(year, month - 1, d);
       const dow = dateObj.getDay();
 
-      const activeSchedules = schedules.filter((s: any) => 
-        s.day_of_week === dow &&
-        s.valid_from <= cellDateStr &&
-        (s.valid_to === null || cellDateStr <= s.valid_to)
-      );
+      const activeSchedules = schedules.filter((s: any) => {
+        if (s.type === 'EXTRA') {
+          return s.valid_from === cellDateStr;
+        }
+        return (
+          s.day_of_week === dow &&
+          s.valid_from <= cellDateStr &&
+          (s.valid_to === null || cellDateStr <= s.valid_to)
+        );
+      });
 
       activeSchedules.forEach((s: any) => {
         const cancelKey = `${s.class_id}_${cellDateStr}`;
         const isCancelled = !!cancelledSessions[cancelKey];
 
-        if (!isCancelled) {
-          const startHour = s.start_time;
-          const endHour = s.end_time;
-          const startDateTime = `${cellDateStr}T${startHour.slice(0, 5)}:00`;
-          const endDateTime = `${cellDateStr}T${endHour.slice(0, 5)}:00`;
+        const startHour = s.start_time;
+        const endHour = s.end_time;
+        const startDateTime = `${cellDateStr}T${startHour.slice(0, 5)}:00`;
+        const endDateTime = `${cellDateStr}T${endHour.slice(0, 5)}:00`;
 
-          eventsToCreate.push({
-            summary: `[Lịch Dạy] ${s.name}`,
-            description: `Lớp dạy: ${s.name}\nLoại lớp: ${s.type === 'FIXED' ? 'Cố định' : 'Extra'}\nThù lao: ${s.rate_per_session.toLocaleString()}đ / buổi\n[SPeanut]`,
-            start: {
-              dateTime: startDateTime,
-              timeZone: 'Asia/Ho_Chi_Minh',
-            },
-            end: {
-              dateTime: endDateTime,
-              timeZone: 'Asia/Ho_Chi_Minh',
-            },
-          });
+        const summary = isCancelled ? `[Nghỉ] [Lịch Dạy] ${s.name}` : `[Lịch Dạy] ${s.name}`;
+        const description = `Lớp dạy: ${s.name}\nLoại lớp: ${s.type === 'FIXED' ? 'Cố định' : 'Extra'}\nThù lao: ${s.rate_per_session.toLocaleString()}đ / buổi\nTrạng thái: ${isCancelled ? 'Đã nghỉ/hủy' : 'Hoạt động'}\n[SPeanut]`;
+
+        let colorId = '10'; // Màu xanh lá (Basil) cho lớp FIXED
+        if (isCancelled) {
+          colorId = '11'; // Màu đỏ (Tomato) cho ngày nghỉ
+        } else if (s.type === 'EXTRA') {
+          colorId = '5'; // Màu vàng (Banana) cho lớp Extra
         }
+
+        eventsToCreate.push({
+          summary,
+          description,
+          colorId,
+          start: {
+            dateTime: startDateTime,
+            timeZone: 'Asia/Ho_Chi_Minh',
+          },
+          end: {
+            dateTime: endDateTime,
+            timeZone: 'Asia/Ho_Chi_Minh',
+          },
+        });
       });
     }
 
@@ -243,7 +258,7 @@ export default function CalendarView({
       const listRes = await fetch(listUrl, {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
-      
+
       if (!listRes.ok) {
         const errorText = await listRes.text();
         console.error("Google Calendar API check failed:", errorText);
@@ -385,7 +400,7 @@ export default function CalendarView({
   const toggleCancelSession = async (classId: number, dateStr: string) => {
     const key = `${classId}_${dateStr}`;
     const updated = { ...cancelledSessions, [key]: !cancelledSessions[key] };
-    
+
     // UI update
     setCancelledSessions(updated);
     localStorage.setItem('speanut_cancelled_sessions', JSON.stringify(updated));
@@ -440,11 +455,16 @@ export default function CalendarView({
       const dateObj = new Date(d.year, d.month - 1, d.day);
       const dow = dateObj.getDay(); // Sunday = 0, Monday = 1, etc.
 
-      const activeSchedules = schedules.filter((s: any) => 
-        s.day_of_week === dow &&
-        s.valid_from <= cellDateStr &&
-        (s.valid_to === null || cellDateStr <= s.valid_to)
-      );
+      const activeSchedules = schedules.filter((s: any) => {
+        if (s.type === 'EXTRA') {
+          return s.valid_from === cellDateStr;
+        }
+        return (
+          s.day_of_week === dow &&
+          s.valid_from <= cellDateStr &&
+          (s.valid_to === null || cellDateStr <= s.valid_to)
+        );
+      });
 
       // Sắp xếp lịch học theo thời gian bắt đầu tăng dần
       activeSchedules.sort((a: any, b: any) => a.start_time.localeCompare(b.start_time));
@@ -466,11 +486,16 @@ export default function CalendarView({
     const dateObj = new Date(year, month - 1, selected);
     const dow = dateObj.getDay();
 
-    const activeSchedules = schedules.filter((s: any) => 
-      s.day_of_week === dow &&
-      s.valid_from <= cellDateStr &&
-      (s.valid_to === null || cellDateStr <= s.valid_to)
-    );
+    const activeSchedules = schedules.filter((s: any) => {
+      if (s.type === 'EXTRA') {
+        return s.valid_from === cellDateStr;
+      }
+      return (
+        s.day_of_week === dow &&
+        s.valid_from <= cellDateStr &&
+        (s.valid_to === null || cellDateStr <= s.valid_to)
+      );
+    });
 
     // Sắp xếp lịch học theo thời gian bắt đầu tăng dần
     activeSchedules.sort((a: any, b: any) => a.start_time.localeCompare(b.start_time));
@@ -485,9 +510,9 @@ export default function CalendarView({
         id: s.id,
         class_id: s.class_id,
         dateStr: cellDateStr,
-        title: s.name,
-        subtitle: s.type === 'EXTRA' 
-          ? `Lớp Extra | Thù lao: ${s.rate_per_session.toLocaleString()}đ / buổi` 
+        title: isCancelled ? `[Nghỉ] ${s.name}` : s.name,
+        subtitle: s.type === 'EXTRA'
+          ? `Lớp Extra | Thù lao: ${s.rate_per_session.toLocaleString()}đ / buổi`
           : `Thù lao: ${s.rate_per_session.toLocaleString()}đ / buổi`,
         time: `${start}–${end}`,
         color: isCancelled ? '#FF3B30' : getClassColor(s.class_id, s.type),
@@ -511,11 +536,16 @@ export default function CalendarView({
       const dateObj = new Date(year, month - 1, d);
       const dow = dateObj.getDay();
 
-      const activeSchedules = schedules.filter((s: any) => 
-        s.day_of_week === dow &&
-        s.valid_from <= cellDateStr &&
-        (s.valid_to === null || cellDateStr <= s.valid_to)
-      );
+      const activeSchedules = schedules.filter((s: any) => {
+        if (s.type === 'EXTRA') {
+          return s.valid_from === cellDateStr;
+        }
+        return (
+          s.day_of_week === dow &&
+          s.valid_from <= cellDateStr &&
+          (s.valid_to === null || cellDateStr <= s.valid_to)
+        );
+      });
 
       // Cộng vào tổng kế hoạch cả tháng (không giới hạn ngày)
       totalPlannedCount += activeSchedules.length;
@@ -552,11 +582,11 @@ export default function CalendarView({
     };
   }, [year, month, schedules, cancelledSessions]);
 
- function prevMonth() {
+  function prevMonth() {
     // 1. Tính toán tháng mới và năm mới trước
     let targetMonth = month - 1;
     let targetYear = year;
-    
+
     if (month === 1) {
       targetMonth = 12;
       targetYear = year - 1;
@@ -590,14 +620,14 @@ export default function CalendarView({
   const portalRoot = typeof document !== 'undefined' ? document.getElementById('top-left-portal-root') : null;
   const syncBtnNode = !loading && !error ? (
     <div className={styles.topLeftSyncContainer}>
-      <button 
-        type="button" 
-        className={styles.syncBtnTop} 
+      <button
+        type="button"
+        className={styles.syncBtnTop}
         onClick={handleGoogleSync}
         disabled={syncing}
       >
         <svg viewBox="0 0 24 24" width="14" height="14" style={{ marginRight: '4px' }}>
-          <path fill="#4285F4" d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/>
+          <path fill="#4285F4" d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" />
         </svg>
         {syncing ? 'Đang đồng bộ...' : 'Đồng bộ Google'}
       </button>
@@ -658,7 +688,7 @@ export default function CalendarView({
               isSel ? styles.selected : "",
               !d.isCurrentMonth ? styles.otherDay : "",
             ].filter(Boolean).join(" ");
-            
+
             return (
               <div
                 key={idx}
@@ -796,8 +826,10 @@ export default function CalendarView({
             </div>
           )}
 
-      </div>
+        </div>
       </aside>
+
+      <InteractiveTour activeNav={activeNav} />
     </div>
   );
 }

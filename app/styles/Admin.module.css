@@ -543,31 +543,6 @@
   transform: translateY(0);
 }
 
-.exportPdfBtn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background-color: var(--primary, #735BF2);
-  color: #ffffff;
-  border: none;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(115, 91, 242, 0.2);
-  transition: all 0.2s ease;
-}
-
-.exportPdfBtn:hover {
-  background-color: #5d45d6;
-  transform: translateY(-1px);
-}
-
-.exportPdfBtn:active {
-  transform: translateY(0);
-}
-
 /* ── Classes List Tab ────────────────────────────────────────────── */
 .classesGrid {
   display: grid;
@@ -580,7 +555,7 @@
   border: 1px solid var(--border);
   border-radius: 20px;
   padding: 20px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.02);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -589,7 +564,7 @@
 
 .adminClassCard:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 22px rgba(0,0,0,0.06);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.06);
   border-color: var(--primary, #735BF2);
 }
 
@@ -731,8 +706,13 @@
 }
 
 @keyframes adminFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes adminSlideUp {
@@ -740,9 +720,9 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
-
