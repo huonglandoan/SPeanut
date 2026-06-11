@@ -2,18 +2,14 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-import { LoginWithAPI } from '../services/auth'
 import styles from '../styles/Login.module.css'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false); // Đã sửa chính tả setLoanding -> setLoading
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const router = useRouter(); // Đã thêm dấu () để kích hoạt router chuẩn ts(2339)
 
   const handleToggleTheme = (mode: 'light' | 'dark') => {
     if (mode === 'dark') {
@@ -44,25 +40,30 @@ export default function LoginPage() {
         targetEmail = 'user@speanut.com';
       }
 
-      // Đăng nhập trực tiếp bằng client-side supabase instance
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: targetEmail,
-        password,
+      // Gọi API server-side để set cookie đúng cách
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: targetEmail, password }),
       });
 
-      if (signInError) {
-        throw new Error(signInError.message);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Đăng nhập không thành công.');
       }
-      
+
       setSuccess('Đăng nhập thành công!');
 
       // Chuyển hướng
-      const target = (targetEmail === 'admin@speanut.com')
-        ? '/admin'
-        : '/';
+      const target = (targetEmail === 'admin@speanut.com' || targetEmail === '111111@speanut.com') ? '/admin' : '/';
       window.location.href = target;
     } catch (err: any) {
-      setError(err.message);
+      // Dịch lỗi tiếng Anh sang tiếng Việt
+      let msg = err.message;
+      if (msg.includes('Invalid login credentials')) msg = 'Email hoặc mật khẩu không đúng.';
+      else if (msg.includes('Email not confirmed')) msg = 'Email chưa được xác thực. Vui lòng kiểm tra hộp thư.';
+      setError(msg);
     } finally {
       setLoading(false);
     }

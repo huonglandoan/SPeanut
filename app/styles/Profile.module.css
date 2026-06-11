@@ -30,13 +30,13 @@
 
 .avatarContainer {
   position: relative;
-  width: 110px;
-  height: 110px;
+  width: 150px;
+  height: 150px;
   border-radius: 50%;
-  padding: 4px;
+  padding: 5px;
   background: linear-gradient(135deg, var(--primary, #735BF2), #6366f1);
-  box-shadow: 0 8px 20px rgba(115, 91, 242, 0.2);
-  margin-bottom: 16px;
+  box-shadow: 0 8px 22px rgba(115, 91, 242, 0.22);
+  margin-bottom: 20px;
   transition: transform 0.3s ease;
 }
 
@@ -50,7 +50,7 @@
   border-radius: 50%;
   object-fit: cover;
   background-color: var(--bg-app);
-  border: 3px solid var(--bg-card);
+  border: 4px solid var(--bg-card);
 }
 
 .displayName {

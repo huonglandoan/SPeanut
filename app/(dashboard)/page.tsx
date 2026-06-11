@@ -8,6 +8,9 @@ import Scheduler from './class'
 import CalendarView from './calendar'
 import SalaryView from './salary'
 import ProfileView from './profile'
+import Image from 'next/image'
+import { PeanutLoader } from '../components/Loader'
+
 
 import { BookOpen, Calendar, Wallet, User, Heart } from "lucide-react";
 
@@ -16,9 +19,9 @@ const NAV_LABELS = ["Class", "Calendar", "Wallet", "Profile"];
 export const dynamic = 'force-dynamic';
 
 export default function DashboardPage() {
-  const [year, setYear] = useState(2026)
-  const [month, setMonth] = useState(4)
-  const [selected, setSelected] = useState(2)
+  const [year, setYear] = useState(() => new Date().getFullYear())
+  const [month, setMonth] = useState(() => new Date().getMonth() + 1)
+  const [selected, setSelected] = useState(() => new Date().getDate())
   const [activeNav, setActiveNav] = useState(1)
   
   const [loading, setLoading] = useState(true)
@@ -32,7 +35,7 @@ export default function DashboardPage() {
       if (!session) {
         // Không có session -> Đẩy người dùng về trang /login ngay
         router.push('/login')
-      } else if (session.user.email === 'admin@speanut.com') {
+      } else if (session.user.email === 'admin@speanut.com' || session.user.email === '111111@speanut.com') {
         // Nếu là admin -> Chuyển hướng thẳng sang trang quản trị /admin
         router.push('/admin')
       } else {
@@ -46,7 +49,7 @@ export default function DashboardPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, session: any) => {
       if (event === 'SIGNED_OUT') {
         router.push('/login')
-      } else if (session && session.user.email === 'admin@speanut.com') {
+      } else if (session && (session.user.email === 'admin@speanut.com' || session.user.email === '111111@speanut.com')) {
         router.push('/admin')
       }
     })
@@ -74,49 +77,8 @@ export default function DashboardPage() {
     }
   }, []);
 
-  // Nếu đang kiểm tra thông tin, hiện màn hình chờ với peanut xoay tròn
   if (loading) {
-    return (
-      <div style={{
-        position: 'fixed',
-        inset: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        background: '#fdf6ec',
-        zIndex: 9999,
-      }}>
-        <style>{`
-          @keyframes spin-peanut {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-        <div style={{
-          width: '20px',
-          height: '20px',
-          borderRadius: '50%',
-          overflow: 'hidden',
-          animation: 'spin-peanut 1.2s linear infinite',
-          flexShrink: 0,
-        }}>
-          <img
-            src="/peanut.png"
-            alt="SPeanut"
-            style={{
-              width: '110%',
-              height: '110%',
-              objectFit: 'cover',
-              objectPosition: 'center',
-              marginLeft: '-5%',
-              marginTop: '-5%',
-              display: 'block',
-            }}
-          />
-        </div>
-      </div>
-    )
+    return <PeanutLoader text="Đang tải dữ liệu SPeanut..." fullscreen />;
   }
 
   return (
@@ -146,7 +108,13 @@ export default function DashboardPage() {
         />
       </div>
       <div style={{ display: activeNav === 2 ? 'block' : 'none', width: '100%' }}>
-        <SalaryView activeNav={activeNav} />
+        <SalaryView 
+          activeNav={activeNav} 
+          year={year}
+          setYear={setYear}
+          month={month}
+          setMonth={setMonth}
+        />
       </div>
       <div style={{ display: activeNav === 3 ? 'block' : 'none', width: '100%' }}>
         <ProfileView activeNav={activeNav} />

@@ -5,6 +5,22 @@ import { supabase } from '@/lib/supabase'
 import { fetchProfile, updateProfile } from '../services/profile'
 import profileStyles from '../styles/Profile.module.css'
 import { Edit3, X, Upload, LogOut, Loader2 } from "lucide-react"
+import Image from 'next/image'
+import { PeanutLoader } from '../components/Loader'
+
+const sanitizeBankOwner = (str: string): string => {
+  if (!str) return "";
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toUpperCase();
+};
+
+const sanitizeBankNumber = (str: string): string => {
+  return str.replace(/\D/g, "");
+};
 
 interface ProfileViewProps {
   activeNav: number;
@@ -101,7 +117,7 @@ export default function ProfileView({ activeNav }: ProfileViewProps) {
 
   const handleCropConfirm = () => {
     if (!tempAvatarSrc) return;
-    const img = new Image();
+    const img = new window.Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
       const size = 150;
@@ -141,7 +157,7 @@ export default function ProfileView({ activeNav }: ProfileViewProps) {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const img = new Image();
+        const img = new window.Image();
         img.onload = async () => {
           let qrText = '';
 
@@ -273,16 +289,190 @@ export default function ProfileView({ activeNav }: ProfileViewProps) {
     }
   };
 
+  const handleDirectQrUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setProfileLoading(true);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const img = new window.Image();
+      img.onload = async () => {
+        let qrText = '';
+        let detectedOwner = '';
+        let detectedNumber = '';
+        let detectedBrand = '';
+
+        // 1. Quét QR trên ảnh gốc chất lượng cao
+        const origCanvas = document.createElement('canvas');
+        origCanvas.width = img.width;
+        origCanvas.height = img.height;
+        const origCtx = origCanvas.getContext('2d');
+        if (origCtx) {
+          origCtx.drawImage(img, 0, 0);
+          
+          if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
+            try {
+              const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
+              const results = await detector.detect(origCanvas);
+              if (results && results.length > 0) {
+                qrText = results[0].rawValue;
+              }
+            } catch (e) {
+              console.warn("Lỗi BarcodeDetector native trên ảnh gốc:", e);
+            }
+          }
+          
+          if (!qrText) {
+            try {
+              const jsQR = (await import('jsqr')).default;
+              const imgData = origCtx.getImageData(0, 0, img.width, img.height);
+              const decoded = jsQR(imgData.data, imgData.width, imgData.height);
+              if (decoded) {
+                qrText = decoded.data;
+              }
+            } catch (e) {
+              console.warn("Lỗi jsQR trên ảnh gốc:", e);
+            }
+          }
+        }
+
+        // 2. Tạo canvas thu nhỏ để xử lý crop/hiển thị
+        const canvas = document.createElement('canvas');
+        const maxDim = 600;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = (h / w) * maxDim;
+            w = maxDim;
+          } else {
+            w = (w / h) * maxDim;
+            h = maxDim;
+          }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, w, h);
+          
+          if (!qrText) {
+            if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
+              try {
+                const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
+                const results = await detector.detect(canvas);
+                if (results && results.length > 0) {
+                  qrText = results[0].rawValue;
+                }
+              } catch (e) {
+                console.warn("Lỗi BarcodeDetector native trên ảnh thu nhỏ:", e);
+              }
+            }
+            
+            if (!qrText) {
+              try {
+                const jsQR = (await import('jsqr')).default;
+                const imgData = ctx.getImageData(0, 0, w, h);
+                const decoded = jsQR(imgData.data, imgData.width, imgData.height);
+                if (decoded) {
+                  qrText = decoded.data;
+                }
+              } catch (e) {
+                console.warn("Lỗi giải mã QR bằng jsQR:", e);
+              }
+            }
+          }
+
+          if (qrText) {
+            try {
+              const parsed = parseQrTextRobust(qrText);
+              if (parsed.owner) detectedOwner = parsed.owner;
+              if (parsed.number) detectedNumber = parsed.number;
+              if (parsed.brand) detectedBrand = parsed.brand;
+            } catch (err) {
+              console.error("Lỗi giải mã thông tin QR:", err);
+            }
+          }
+
+          let finalQrData = reader.result as string;
+          const bounds = await detectQRCodeBounds(canvas);
+          if (bounds) {
+            const cropCanvas = document.createElement('canvas');
+            cropCanvas.width = 300;
+            cropCanvas.height = 300;
+            const cropCtx = cropCanvas.getContext('2d');
+            if (cropCtx) {
+              cropCtx.fillStyle = '#ffffff';
+              cropCtx.fillRect(0, 0, 300, 300);
+              cropCtx.drawImage(
+                canvas,
+                bounds.x, bounds.y, bounds.width, bounds.height,
+                0, 0, 300, 300
+              );
+              finalQrData = cropCanvas.toDataURL('image/jpeg', 0.95);
+            }
+          }
+
+          // Cập nhật các state cục bộ
+          setQrCode(finalQrData);
+          const cleanDetectedOwner = detectedOwner ? sanitizeBankOwner(detectedOwner) : '';
+          const cleanDetectedNumber = detectedNumber ? sanitizeBankNumber(detectedNumber) : '';
+
+          if (cleanDetectedOwner) {
+            setBankOwner(cleanDetectedOwner);
+            setFullName(cleanDetectedOwner);
+          }
+          if (cleanDetectedNumber) setBankNumber(cleanDetectedNumber);
+          if (detectedBrand) setBankBrand(detectedBrand);
+
+          // Lưu trực tiếp
+          try {
+            await updateProfile({
+              full_name: cleanDetectedOwner || fullName,
+              avatar: avatar,
+              bank_brand: detectedBrand || bankBrand,
+              bank_number: cleanDetectedNumber || bankNumber,
+              bank_owner: cleanDetectedOwner || bankOwner,
+              qr_code: finalQrData,
+            });
+            setToastMessage('Đã lưu ảnh QR và thông tin chuyển khoản thành công!');
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+          } catch (dbErr) {
+            console.error("Lỗi cập nhật profile tự động:", dbErr);
+            setToastMessage('Lỗi khi đồng bộ thông tin QR lên server.');
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+          }
+        }
+        setProfileLoading(false);
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+
+    const cleanBankNumber = sanitizeBankNumber(bankNumber);
+    const cleanBankOwner = sanitizeBankOwner(bankOwner);
+
+    if (bankNumber && !/^\d+$/.test(cleanBankNumber)) {
+      alert("Số tài khoản chỉ được phép chứa chữ số!");
+      setSaving(false);
+      return;
+    }
+
     try {
       await updateProfile({
-        full_name: fullName,
+        full_name: cleanBankOwner || fullName,
         avatar: avatar,
         bank_brand: bankBrand,
-        bank_number: bankNumber,
-        bank_owner: bankOwner,
+        bank_number: cleanBankNumber,
+        bank_owner: cleanBankOwner,
         qr_code: qrCode,
       });
       // Reload lại từ DB để xác nhận dữ liệu đã được lưu thành công
@@ -317,7 +507,7 @@ export default function ProfileView({ activeNav }: ProfileViewProps) {
       {/* Loading State */}
       {profileLoading ? (
         <div className={profileStyles.profileCard} style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Loader2 size={32} style={{ animation: 'spin 1s linear infinite', color: 'var(--primary, #735BF2)' }} />
+          <PeanutLoader text="Đang tải thông tin cá nhân..." />
         </div>
       ) : (
       <>
@@ -335,32 +525,39 @@ export default function ProfileView({ activeNav }: ProfileViewProps) {
         )}
 
         <div className={profileStyles.avatarContainer}>
-          <img 
-            src={avatar} 
-            alt="Avatar" 
-            className={profileStyles.avatarImage} 
-            onError={(e) => {
-              e.currentTarget.src = "/avatar.png";
-            }}
-          />
+          <div style={avatar === '/avatar.png' ? { position: 'relative', width: '100%', height: '100%', borderRadius: '50%', backgroundColor: 'var(--bg-card)', overflow: 'hidden' } : { position: 'relative', width: '100%', height: '100%' }}>
+            <Image 
+              src={avatar} 
+              alt="Avatar" 
+              unoptimized
+              fill
+              style={avatar === '/avatar.png' ? { objectFit: 'contain', padding: '15px' } : { objectFit: 'cover' }}
+              className={avatar === '/avatar.png' ? '' : profileStyles.avatarImage} 
+            />
+          </div>
         </div>
         
         <h2 className={profileStyles.displayName}>{fullName || 'User'}</h2>
         <span className={profileStyles.roleBadge}>
-          {email === 'admin@speanut.com' ? 'Admin' : 'User'}
+          {email === 'admin@speanut.com' || email === '111111@speanut.com' ? 'Admin' : 'User'}
         </span>
 
         <div className={profileStyles.qrSection}>
           <h4 className={profileStyles.sectionTitle} style={{ textAlign: 'center', paddingLeft: 0 }}>QR chuyển khoản</h4>
           <div className={profileStyles.qrContainer}>
             {qrCode && qrCode !== '/default_qr.png' ? (
-              <img 
-                src={qrCode} 
-                alt="QR Chuyển Khoản" 
-                className={profileStyles.qrImage}
-              />
+              <div style={{ position: 'relative', width: '180px', height: '180px' }}>
+                <Image 
+                  src={qrCode} 
+                  alt="QR Chuyển Khoản" 
+                  unoptimized
+                  fill
+                  style={{ objectFit: 'contain' }}
+                  className={profileStyles.qrImage}
+                />
+              </div>
             ) : (
-              <div style={{
+              <label style={{
                 width: '180px',
                 height: '180px',
                 display: 'flex',
@@ -371,11 +568,21 @@ export default function ProfileView({ activeNav }: ProfileViewProps) {
                 borderRadius: '20px',
                 color: 'var(--text-main, #64748b)',
                 gap: '8px',
-                backgroundColor: 'rgba(115, 91, 242, 0.02)'
-              }}>
+                backgroundColor: 'rgba(115, 91, 242, 0.02)',
+                cursor: 'pointer',
+                transition: 'border-color 0.2s ease, background-color 0.2s ease'
+              }}
+              title="Nhấn để tải lên ảnh QR của bạn"
+              >
                 <Upload size={32} style={{ color: 'var(--primary, #735BF2)', opacity: 0.8 }} />
                 <span style={{ fontSize: '14px', fontWeight: 600, opacity: 0.8 }}>Upload your QR</span>
-              </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleDirectQrUpload}
+                  style={{ display: 'none' }}
+                />
+              </label>
             )}
           </div>
           <div className={profileStyles.qrDetails}>
@@ -403,6 +610,23 @@ export default function ProfileView({ activeNav }: ProfileViewProps) {
         </button>
       </div>
 
+      {/* Vài dòng ngắn gọn Footer */}
+      <div style={{ 
+        textAlign: 'center', 
+        fontSize: '12px', 
+        color: 'var(--text-muted, #94a3b8)', 
+        marginTop: '16px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '4px',
+        opacity: 0.8
+      }}>
+        <div>© {new Date().getFullYear()} SPeanut. All rights reserved.</div>
+        <div>
+          Zalo: <a href="https://zalo.me/0982415010" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary, #735BF2)', textDecoration: 'none', fontWeight: 600 }}>0982.415.010</a> | Email: <a href="mailto:lan.doanhuonglan@gmail.com" style={{ color: 'var(--primary, #735BF2)', textDecoration: 'none', fontWeight: 600 }}>lan.doanhuonglan@gmail.com</a>
+        </div>
+      </div>
+
       {/* Edit Form Modal */}
       {isEditModalOpen && (
         <div className={profileStyles.modalOverlay} onClick={() => { setIsEditModalOpen(false); setTempAvatarSrc(null); }}>
@@ -427,10 +651,11 @@ export default function ProfileView({ activeNav }: ProfileViewProps) {
                     onPointerUp={handlePointerUp}
                     style={{ position: 'relative', overflow: 'hidden' }}
                   >
-                    <img
+                    <Image
                       src={tempAvatarSrc}
                       alt="Crop area"
-                      className={profileStyles.cropImage}
+                      unoptimized
+                      fill
                       style={{
                         transform: `translate(calc(-50% + ${cropOffset.x}px), calc(-50% + ${cropOffset.y}px)) scale(${cropScale})`,
                         height: '200px',
@@ -511,20 +736,22 @@ export default function ProfileView({ activeNav }: ProfileViewProps) {
                 <div className={profileStyles.inputGroup}>
                   <label className={profileStyles.inputLabel}>Ảnh đại diện</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}>
-                    <img 
-                      src={avatar} 
-                      alt="Avatar Preview" 
-                      style={{
-                        width: '60px',
-                        height: '60px',
-                        borderRadius: '50%',
-                        objectFit: 'cover',
-                        border: '2px solid var(--border, #e2e8f0)',
-                      }}
-                      onError={(e) => {
-                        e.currentTarget.src = "/avatar.png";
-                      }}
-                    />
+                    <div style={{ position: 'relative', width: '60px', height: '60px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0, backgroundColor: avatar === '/avatar.png' ? 'var(--bg-card)' : 'transparent', border: avatar === '/avatar.png' ? '2px solid var(--border, #e2e8f0)' : 'none' }}>
+                      <Image 
+                        src={avatar} 
+                        alt="Avatar Preview" 
+                        unoptimized
+                        fill
+                        style={avatar === '/avatar.png' ? {
+                          objectFit: 'contain',
+                          padding: '6px',
+                        } : {
+                          objectFit: 'cover',
+                          border: '2px solid var(--border, #e2e8f0)',
+                        }}
+                        className={avatar === '/avatar.png' ? '' : profileStyles.avatarImage} 
+                      />
+                    </div>
                     <div className={profileStyles.fileInputWrapper} style={{ flex: 1 }}>
                       <label className={profileStyles.fileInputLabel}>
                         <Upload size={16} />
@@ -553,18 +780,20 @@ export default function ProfileView({ activeNav }: ProfileViewProps) {
                         border: '1px solid var(--border, #e2e8f0)', 
                         backgroundColor: 'var(--bg-app, #f8fafc)' 
                       }}>
-                        <img 
-                          src={qrCode} 
-                          alt="QR Preview" 
-                          style={{
-                            width: '80px',
-                            height: '80px',
-                            objectFit: 'contain',
-                            borderRadius: '8px',
-                            backgroundColor: '#fff',
-                            border: '1px solid var(--border, #e2e8f0)',
-                          }}
-                        />
+                        <div style={{ position: 'relative', width: '80px', height: '80px', flexShrink: 0 }}>
+                          <Image 
+                            src={qrCode} 
+                            alt="QR Preview" 
+                            unoptimized
+                            fill
+                            style={{
+                              objectFit: 'contain',
+                              borderRadius: '8px',
+                              backgroundColor: '#fff',
+                              border: '1px solid var(--border, #e2e8f0)',
+                            }}
+                          />
+                        </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px' }}>
                           <span style={{ fontWeight: 600, color: 'var(--text-title, #1e293b)' }}>Thông tin nhận diện:</span>
                           <span style={{ color: 'var(--text-main, #64748b)' }}>🏦 Ngân hàng: <strong>{bankBrand || 'Chưa nhận diện'}</strong></span>
@@ -618,9 +847,9 @@ export default function ProfileView({ activeNav }: ProfileViewProps) {
                   <input
                     type="text"
                     value={bankNumber}
-                    onChange={(e) => setBankNumber(e.target.value)}
+                    onChange={(e) => setBankNumber(sanitizeBankNumber(e.target.value))}
                     className={profileStyles.inputField}
-                    placeholder="Ví dụ: 9704 2292..."
+                    placeholder="Ví dụ: 97042292..."
                   />
                 </div>
 
@@ -629,7 +858,7 @@ export default function ProfileView({ activeNav }: ProfileViewProps) {
                   <input
                     type="text"
                     value={bankOwner}
-                    onChange={(e) => setBankOwner(e.target.value)}
+                    onChange={(e) => setBankOwner(sanitizeBankOwner(e.target.value))}
                     className={profileStyles.inputField}
                     placeholder="Ví dụ: NGUYEN VAN A..."
                   />

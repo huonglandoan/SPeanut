@@ -2,9 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import styles from '../styles/Register.module.css'; 
-import { RegisterWithAPI } from '../services/auth';
+import styles from '../styles/Register.module.css';
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
@@ -38,16 +36,43 @@ export default function RegisterPage() {
       return;
     }
 
-    setLoading(true);
-    
-    try {
-      await RegisterWithAPI({ email, password, fullName });
+    if (password.length < 6) {
+      setError('Mật khẩu phải có ít nhất 6 ký tự.');
+      return;
+    }
 
-  setFullName('');
-  setEmail('');
-  setPassword('');
-  setConfirmPassword('');
-  setSuccess('Đăng ký thành công! Vui lòng kiểm tra email để xác thực.');
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name: fullName }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Đăng ký tài khoản không thành công.');
+      }
+
+      if (data.autoLogin) {
+        // Đăng ký + đăng nhập thành công → vào trang chủ luôn
+        setSuccess('Đăng ký thành công! Đang chuyển hướng...');
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 800);
+      } else if (data.requireConfirm) {
+        // Vẫn cần xác thực email
+        setFullName('');
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        setSuccess('Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản rồi đăng nhập.');
+      } else {
+        setSuccess(data.message || 'Đăng ký thành công!');
+      }
+
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -57,20 +82,18 @@ export default function RegisterPage() {
 
   return (
     <div className={styles.authCard}>
-      
-      {/* 1. Thanh gạt viên thuốc trượt mượt mà đồng bộ với trang Login */}
+
+      {/* Thanh gạt dark/light */}
       <div className={styles.switchContainer}>
         <div className={styles.slider} />
         <button type="button" className={styles.switchBtn} onClick={() => handleToggleTheme('light')}>☀️</button>
         <button type="button" className={styles.switchBtn} onClick={() => handleToggleTheme('dark')}>🌙</button>
       </div>
 
-      {/* 2. Tiêu đề Đăng ký */}
       <p className={styles.authTitle}>Đăng ký</p>
 
       <form onSubmit={handleSubmit}>
-        
-        {/* Ô nhập Họ và tên */}
+
         <div className={styles.fieldPanel}>
           <input
             type="text"
@@ -81,7 +104,6 @@ export default function RegisterPage() {
           />
         </div>
 
-        {/* Ô nhập Email */}
         <div className={styles.fieldPanel}>
           <input
             type="email"
@@ -92,18 +114,16 @@ export default function RegisterPage() {
           />
         </div>
 
-        {/* Ô nhập Mật khẩu */}
         <div className={styles.fieldPanel}>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Mật khẩu"
+            placeholder="Mật khẩu (tối thiểu 6 ký tự)"
             className={styles.fieldInput}
           />
         </div>
 
-        {/* Ô nhập Xác nhận mật khẩu */}
         <div className={styles.fieldPanel}>
           <input
             type="password"
@@ -114,16 +134,14 @@ export default function RegisterPage() {
           />
         </div>
 
-        {/* Hiển thị thông báo lỗi/thành công */}
         {error && <div className={styles.feedbackError}>{error}</div>}
         {success && <div className={styles.feedbackSuccess}>{success}</div>}
 
-        {/* 3. Cụm nút bấm kéo dài 100% xếp chồng chuẩn chỉnh theo bản Dark/Light Register */}
         <div className={styles.actionGroup}>
           <button type="submit" disabled={loading} className={styles.buttonRegister}>
             {loading ? 'Đang tạo tài khoản...' : 'Đăng ký'}
           </button>
-          
+
           <Link href="/login" className={styles.buttonLink}>
             Đã có tài khoản? Đăng nhập ngay
           </Link>

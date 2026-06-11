@@ -1,0 +1,17 @@
+{
+  "name": "SPeanut Portal",
+  "short_name": "SPeanut",
+  "description": "Hệ thống quản lý thù lao và lịch dạy học thông minh cho trợ giảng SPeanut.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fdf6ec",
+  "theme_color": "#735BF2",
+  "icons": [
+    {
+      "src": "/peanut.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

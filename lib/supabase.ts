@@ -1,12 +1,13 @@
 // @/lib/supabase.ts
 import { createBrowserClient } from '@supabase/ssr';
 
-// Khởi tạo thực thể mặc định phòng thủ lỗi build-time của Vercel
+// URL và Key thật từ env vars (luôn có sẵn, không dùng placeholder)
+const ENV_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const ENV_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+// Khởi tạo client mặc định dùng env vars thật
 const defaultSupabase = typeof window !== 'undefined' 
-  ? createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co', 
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJplaceholder'
-    ) 
+  ? createBrowserClient(ENV_URL, ENV_KEY) 
   : (null as any);
 
 // Hàm lấy client đang hoạt động (tùy biến từ localStorage hoặc mặc định)

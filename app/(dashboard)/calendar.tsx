@@ -2,6 +2,8 @@ import {useState, useEffect, useMemo} from 'react'
 import {createPortal} from 'react-dom'
 import styles from '../styles/Calendar.module.css'
 import {ChevronLeft, ChevronRight} from "lucide-react";
+import {SkeletonCard} from '../components/Loader';
+import { fetchProfile, updateProfile } from '../services/profile';
 
 declare global {
   interface Window {
@@ -347,6 +349,28 @@ export default function CalendarView({
     }
   };
 
+  const [profile, setProfile] = useState<any | null>(null);
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const data = await fetchProfile();
+        if (data && data.id) {
+          setProfile(data);
+          if (data.cancelled_sessions && typeof data.cancelled_sessions === 'object') {
+            setCancelledSessions(data.cancelled_sessions);
+            localStorage.setItem('speanut_cancelled_sessions', JSON.stringify(data.cancelled_sessions));
+          }
+        }
+      } catch (err) {
+        console.error("Lỗi khi tải thông tin cá nhân trong Lịch dạy:", err);
+      }
+    }
+    if (activeNav === 1) {
+      loadProfile();
+    }
+  }, [activeNav]);
+
   useEffect(() => {
     const stored = localStorage.getItem('speanut_cancelled_sessions');
     if (stored) {
@@ -358,13 +382,24 @@ export default function CalendarView({
     }
   }, []);
 
-  const toggleCancelSession = (classId: number, dateStr: string) => {
+  const toggleCancelSession = async (classId: number, dateStr: string) => {
     const key = `${classId}_${dateStr}`;
-    setCancelledSessions(prev => {
-      const updated = { ...prev, [key]: !prev[key] };
-      localStorage.setItem('speanut_cancelled_sessions', JSON.stringify(updated));
-      return updated;
-    });
+    const updated = { ...cancelledSessions, [key]: !cancelledSessions[key] };
+    
+    // UI update
+    setCancelledSessions(updated);
+    localStorage.setItem('speanut_cancelled_sessions', JSON.stringify(updated));
+
+    if (profile) {
+      try {
+        const updatedProfile = await updateProfile({
+          cancelled_sessions: updated
+        });
+        setProfile(updatedProfile);
+      } catch (err) {
+        console.error("Lỗi khi đồng bộ lịch nghỉ lên server:", err);
+      }
+    }
   };
 
   useEffect(() => {
@@ -672,7 +707,10 @@ export default function CalendarView({
       <aside className={styles.eventPanel}>
         <div className={styles.eventList}>
           {loading ? (
-            <p className={styles.noEventsText}>Đang tải lịch dạy...</p>
+            <>
+              <SkeletonCard />
+              <SkeletonCard />
+            </>
           ) : error ? (
             <p className={styles.noEventsText} style={{ color: 'var(--red, #ff4d4f)' }}>Có lỗi xảy ra: {error}</p>
           ) : selectedDayEvents.length > 0 ? (

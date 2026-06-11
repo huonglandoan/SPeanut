@@ -10,6 +10,7 @@ export interface ProfileData {
   bank_owner?: string;
   qr_code?: string;
   extra_incomes?: Record<string, any>;
+  cancelled_sessions?: Record<string, boolean>;
 }
 
 /**

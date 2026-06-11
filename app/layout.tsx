@@ -14,8 +14,10 @@ const geistMono = Geist_Mono({
 
 
 export const metadata: Metadata = {
-  title: 'SPeanut',
-  description: 'Ứng dụng quản lý lương trợ giảng và lịch làm việc.',
+  title: 'SPeanut - Quản lý Lương & Lịch làm việc Trợ giảng',
+  description: 'Hệ thống quản lý thù lao và lịch làm việc thông minh dành cho trợ giảng SPeanut.',
+  keywords: ['SPeanut', 'quản lý lương', 'trợ giảng', 'lịch làm việc', 'bảng lương', 'tính lương trợ giảng'],
+  manifest: '/manifest.json',
   icons: {
     icon: [
       {
@@ -25,6 +27,22 @@ export const metadata: Metadata = {
     ],
     shortcut: '/peanut.png',
     apple: '/peanut.png',
+  },
+  openGraph: {
+    title: 'SPeanut - Quản lý Lương & Lịch làm việc Trợ giảng',
+    description: 'Hệ thống quản lý thù lao và lịch làm việc thông minh dành cho trợ giảng SPeanut.',
+    url: 'https://speanut.com',
+    siteName: 'SPeanut',
+    images: [
+      {
+        url: '/peanut.png',
+        width: 512,
+        height: 512,
+        alt: 'SPeanut Logo',
+      },
+    ],
+    locale: 'vi_VN',
+    type: 'website',
   },
 };
 

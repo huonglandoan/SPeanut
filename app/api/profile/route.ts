@@ -17,8 +17,8 @@ export async function GET() {
       );
     }
 
-    // Lấy đầy đủ các cột thông tin người dùng bao gồm avatar, qr_code, các trường ngân hàng và extra_incomes.
-    const selectStr = 'id, email, full_name, avatar, bank_brand, bank_number, bank_owner, qr_code, extra_incomes';
+    // Lấy đầy đủ các cột thông tin người dùng bao gồm avatar, qr_code, các trường ngân hàng, extra_incomes và cancelled_sessions.
+    const selectStr = 'id, email, full_name, avatar, bank_brand, bank_number, bank_owner, qr_code, extra_incomes, cancelled_sessions';
     try {
       const { data, error } = await supabaseServer
         .from('users')
@@ -98,8 +98,8 @@ export async function PUT(request: Request) {
 
     const body = await request.json();
 
-    // Cho phép cập nhật full_name, avatar, qr_code, và các trường ngân hàng nhận diện tự động từ QR code, và extra_incomes
-    const allowedFields = ['full_name', 'avatar', 'qr_code', 'bank_brand', 'bank_number', 'bank_owner', 'extra_incomes'];
+    // Cho phép cập nhật full_name, avatar, qr_code, và các trường ngân hàng nhận diện tự động từ QR code, extra_incomes, và cancelled_sessions
+    const allowedFields = ['full_name', 'avatar', 'qr_code', 'bank_brand', 'bank_number', 'bank_owner', 'extra_incomes', 'cancelled_sessions'];
     const updateData: Record<string, any> = {};
 
     for (const field of allowedFields) {

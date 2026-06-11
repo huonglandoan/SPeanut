@@ -36,3 +36,46 @@ export async function GET() {
     );
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const supabaseServer = await createClient();
+    const { data: { user } } = await supabaseServer.auth.getUser();
+
+    if (!user || (user.email !== 'admin@speanut.com' && user.email !== '111111@speanut.com')) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Bạn không có quyền quản trị.' },
+        { status: 401 }
+      );
+    }
+
+    const { userId, extraIncomes } = await request.json();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Thiếu thông tin người dùng.' },
+        { status: 400 }
+      );
+    }
+
+    const { data, error } = await supabaseServer
+      .from('users')
+      .update({ extra_incomes: extraIncomes || {} })
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Lỗi khi Admin cập nhật extra_incomes:', error);
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json(data, { status: 200 });
+  } catch (err: any) {
+    console.error('Lỗi hệ thống tại PUT /api/admin/dashboard:', err);
+    return NextResponse.json(
+      { error: err.message || 'Lỗi hệ thống.' },
+      { status: 500 }
+    );
+  }
+}

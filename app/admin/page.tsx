@@ -20,7 +20,7 @@ export default function AdminPage() {
         return;
       }
 
-      if (session.user.email !== 'admin@speanut.com') {
+      if (session.user.email !== 'admin@speanut.com' && session.user.email !== '111111@speanut.com') {
         // Đã đăng nhập nhưng không phải tài khoản admin -> Đẩy về trang chủ của giáo viên
         alert('Bạn không có quyền truy cập trang quản trị!');
         router.push('/');
@@ -37,7 +37,7 @@ export default function AdminPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, session: any) => {
       if (event === 'SIGNED_OUT') {
         router.push('/login');
-      } else if (session && session.user.email !== 'admin@speanut.com') {
+      } else if (session && session.user.email !== 'admin@speanut.com' && session.user.email !== '111111@speanut.com') {
         router.push('/');
       }
     });

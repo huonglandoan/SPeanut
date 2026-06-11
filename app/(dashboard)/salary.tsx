@@ -3,11 +3,17 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Wallet, Calendar, Trash2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import styles from '../styles/Salary.module.css';
 import { fetchProfile, updateProfile } from '../services/profile';
+import { SkeletonCard } from '../components/Loader';
 
 interface SalaryViewProps {
   activeNav: number;
+  year: number;
+  setYear: React.Dispatch<React.SetStateAction<number>>;
+  month: number;
+  setMonth: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const MONTHS = [
@@ -15,21 +21,20 @@ const MONTHS = [
   "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
 ];
 
-export default function SalaryView({ activeNav }: SalaryViewProps) {
-  const [year, setYear] = useState<number>(new Date().getFullYear());
-  const [month, setMonth] = useState<number>(new Date().getMonth() + 1);
+export default function SalaryView({ activeNav, year, setYear, month, setMonth }: SalaryViewProps) {
   const [schedules, setSchedules] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelledSessions, setCancelledSessions] = useState<Record<string, boolean>>({});
 
   // Extra collection states
-  const [extraIncomes, setExtraIncomes] = useState<Array<{ id: string; name: string; amount: number }>>([]);
+  const [extraIncomes, setExtraIncomes] = useState<Array<{ id: string; name: string; amount: number; status?: string; rejectReason?: string }>>([]);
   const [extraName, setExtraName] = useState('');
   const [extraAmount, setExtraAmount] = useState('');
 
   // Profile state for database sync
   const [profile, setProfile] = useState<any>(null);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
 
   // Load profile when Wallet tab is selected
   useEffect(() => {
@@ -37,6 +42,25 @@ export default function SalaryView({ activeNav }: SalaryViewProps) {
       try {
         const data = await fetchProfile();
         setProfile(data);
+
+        // Tải nhật ký thay đổi của riêng gia sư trong vòng 14 ngày gần nhất
+        if (data && data.id) {
+          const fourteenDaysAgo = new Date();
+          fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+          const { data: logs, error: logsError } = await supabase
+            .from('admin_audit_logs')
+            .select('*')
+            .eq('target_user_id', data.id)
+            .gte('created_at', fourteenDaysAgo.toISOString())
+            .order('created_at', { ascending: false });
+            
+          if (logsError) {
+            console.error("Lỗi khi tải nhật ký hoạt động của gia sư:", logsError);
+          } else {
+            setAuditLogs(logs || []);
+          }
+        }
       } catch (err) {
         console.error("Lỗi khi tải thông tin cá nhân:", err);
       }
@@ -95,15 +119,21 @@ export default function SalaryView({ activeNav }: SalaryViewProps) {
   // 2. Đồng bộ trạng thái buổi nghỉ và các khoản thu thêm từ localStorage/DB bất cứ khi nào tab Wallet được mở hoặc chuyển tháng
   useEffect(() => {
     if (activeNav === 2) {
-      const stored = localStorage.getItem('speanut_cancelled_sessions');
-      if (stored) {
-        try {
-          setCancelledSessions(JSON.parse(stored));
-        } catch (e) {
-          console.error("Lỗi parse dữ liệu buổi nghỉ:", e);
-        }
+      // Ưu tiên tải cancelled_sessions từ profile DB, fallback sang localStorage
+      if (profile && profile.cancelled_sessions && typeof profile.cancelled_sessions === 'object') {
+        setCancelledSessions(profile.cancelled_sessions);
+        localStorage.setItem('speanut_cancelled_sessions', JSON.stringify(profile.cancelled_sessions));
       } else {
-        setCancelledSessions({});
+        const stored = localStorage.getItem('speanut_cancelled_sessions');
+        if (stored) {
+          try {
+            setCancelledSessions(JSON.parse(stored));
+          } catch (e) {
+            console.error("Lỗi parse dữ liệu buổi nghỉ:", e);
+          }
+        } else {
+          setCancelledSessions({});
+        }
       }
 
       const key = `speanut_extra_incomes_${year}_${month}`;
@@ -293,8 +323,41 @@ export default function SalaryView({ activeNav }: SalaryViewProps) {
   }, [year, month, schedules, cancelledSessions]);
 
   const totalExtraIncome = useMemo(() => {
-    return extraIncomes.reduce((sum, item) => sum + item.amount, 0);
+    return extraIncomes
+      .filter(item => item.status !== 'rejected')
+      .reduce((sum, item) => sum + item.amount, 0);
   }, [extraIncomes]);
+
+  const deletedByAdminIncomes = useMemo(() => {
+    const dbKey = `${year}_${month}`;
+    const deletedItems: any[] = [];
+    const seenIds = new Set<string>();
+    const currentIds = new Set(extraIncomes.map(item => item.id || item.name));
+    
+    auditLogs.forEach(log => {
+      const oldList = log.old_value?.[dbKey] || [];
+      const newList = log.new_value?.[dbKey] || [];
+      
+      const allLogItems = [...oldList, ...newList];
+      allLogItems.forEach(item => {
+        const itemId = item.id || item.name;
+        if (!itemId || seenIds.has(itemId)) return;
+        seenIds.add(itemId);
+        
+        const inOld = oldList.some((x: any) => (x.id || x.name) === itemId);
+        const inNew = newList.some((x: any) => (x.id || x.name) === itemId);
+        
+        if (inOld && !inNew && !currentIds.has(itemId)) {
+          const deletedItem = oldList.find((x: any) => (x.id || x.name) === itemId);
+          if (deletedItem) {
+            deletedItems.push(deletedItem);
+          }
+        }
+      });
+    });
+    
+    return deletedItems;
+  }, [year, month, extraIncomes, auditLogs]);
 
   const finalSalary = stats.totalSalary + totalExtraIncome;
 
@@ -322,14 +385,26 @@ export default function SalaryView({ activeNav }: SalaryViewProps) {
 
     // Append extra incomes
     extraIncomes.forEach(item => {
-      rows.push([
-        "",
-        "",
-        `"${removeAccents(item.name).replace(/"/g, '""')} (Them)"`,
-        "-",
-        item.amount,
-        "Khoan them"
-      ]);
+      const isRejected = item.status === 'rejected';
+      if (isRejected) {
+        rows.push([
+          "",
+          "",
+          `"${removeAccents(item.name).replace(/"/g, '""')} (Bi Admin xoa: ${removeAccents(item.rejectReason || 'Khong hop le').replace(/"/g, '""')})"`,
+          "-",
+          0,
+          "Bi tu choi"
+        ]);
+      } else {
+        rows.push([
+          "",
+          "",
+          `"${removeAccents(item.name).replace(/"/g, '""')} (Them)"`,
+          "-",
+          item.amount,
+          "Khoan them"
+        ]);
+      }
     });
 
     const csvContent = [
@@ -347,6 +422,13 @@ export default function SalaryView({ activeNav }: SalaryViewProps) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    // Ghi nhận nhật ký xuất Excel lên Database
+    fetch('/api/admin/audit-logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'EXPORT_EXCEL', targetMonth: month, targetYear: year })
+    }).catch(err => console.error("Lỗi khi ghi nhận nhật ký xuất Excel:", err));
   };
 
   return (
@@ -400,7 +482,11 @@ export default function SalaryView({ activeNav }: SalaryViewProps) {
         <h4 id="class-breakdown-heading" className={styles.sectionTitle}>Phân tích theo lớp học</h4>
         <div className={styles.summaryList}>
           {loading ? (
-            <p className={styles.noDataText}>Đang tính toán bảng lương...</p>
+            <>
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+            </>
           ) : error ? (
             <p className={styles.noDataText} style={{ color: '#FF3B30' }}>Có lỗi xảy ra: {error}</p>
           ) : stats.classSummaries.length > 0 ? (
@@ -453,28 +539,78 @@ export default function SalaryView({ activeNav }: SalaryViewProps) {
             <button type="submit" className={styles.extraAddBtn}>Thêm</button>
           </form>
 
-          <div className={styles.extraList}>
-            {extraIncomes.length === 0 ? (
+           <div className={styles.extraList}>
+            {extraIncomes.length === 0 && deletedByAdminIncomes.length === 0 ? (
               <p className={styles.extraEmptyText}>Chưa có khoản thu thêm nào trong tháng này.</p>
             ) : (
-              extraIncomes.map(item => (
-                <div key={item.id} className={styles.extraItem}>
-                  <div className={styles.extraItemLeft}>
-                    <span className={styles.extraItemName}>{item.name}</span>
-                  </div>
-                  <div className={styles.extraItemRight}>
-                    <span className={styles.extraItemAmount}>+{item.amount.toLocaleString()}đ</span>
-                    <button 
-                      type="button" 
-                      onClick={() => handleDeleteExtraIncome(item.id)}
-                      className={styles.extraDelBtn}
-                      title="Xóa"
+              <>
+                {extraIncomes.map(item => {
+                  const isRejected = item.status === 'rejected';
+                  return (
+                    <div 
+                      key={item.id} 
+                      className={styles.extraItem} 
+                      style={isRejected ? { opacity: 0.75, borderLeft: '3px solid #ff3b30' } : undefined}
                     >
-                      Xóa
-                    </button>
+                      <div 
+                        className={styles.extraItemLeft} 
+                        style={isRejected ? { textDecoration: 'line-through', color: '#ff3b30' } : undefined}
+                      >
+                        <span className={styles.extraItemName}>{item.name}</span>
+                      </div>
+                      <div className={styles.extraItemRight}>
+                        <span 
+                          className={styles.extraItemAmount} 
+                          style={isRejected ? { textDecoration: 'line-through', color: '#ff3b30', marginRight: '8px' } : undefined}
+                        >
+                          +{item.amount.toLocaleString()}đ
+                        </span>
+                        {isRejected ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '11px', color: '#ff3b30', fontWeight: 'bold' }}>
+                              (Admin xóa: {item.rejectReason})
+                            </span>
+                            <button 
+                              type="button" 
+                              onClick={() => handleDeleteExtraIncome(item.id)}
+                              className={styles.extraDelBtn}
+                              title="Xóa hẳn khỏi giao diện"
+                              style={{ color: '#ff3b30' }}
+                            >
+                              Xóa
+                            </button>
+                          </div>
+                        ) : (
+                          <button 
+                            type="button" 
+                            onClick={() => handleDeleteExtraIncome(item.id)}
+                            className={styles.extraDelBtn}
+                            title="Xóa"
+                          >
+                            Xóa
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {deletedByAdminIncomes.map(item => (
+                  <div key={item.id || item.name} className={styles.extraItem} style={{ opacity: 0.75, borderLeft: '3px solid #ff3b30' }}>
+                    <div className={styles.extraItemLeft} style={{ textDecoration: 'line-through', color: '#ff3b30' }}>
+                      <span className={styles.extraItemName}>{item.name}</span>
+                    </div>
+                    <div className={styles.extraItemRight}>
+                      <span className={styles.extraItemAmount} style={{ textDecoration: 'line-through', color: '#ff3b30', marginRight: '8px' }}>
+                        +{item.amount.toLocaleString()}đ
+                      </span>
+                      <span style={{ fontSize: '11px', color: '#ff3b30', fontWeight: 'bold' }}>
+                        (Admin xóa)
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </>
             )}
           </div>
         </div>
