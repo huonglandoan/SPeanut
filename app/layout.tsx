@@ -14,6 +14,7 @@ const geistMono = Geist_Mono({
 
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://speanut.com'),
   title: 'SPeanut - Quản lý Lương & Lịch làm việc Trợ giảng',
   description: 'Hệ thống quản lý thù lao và lịch làm việc thông minh dành cho trợ giảng SPeanut.',
   keywords: ['SPeanut', 'quản lý lương', 'trợ giảng', 'lịch làm việc', 'bảng lương', 'tính lương trợ giảng'],
@@ -43,6 +44,12 @@ export const metadata: Metadata = {
     ],
     locale: 'vi_VN',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'SPeanut - Quản lý Lương & Lịch làm việc Trợ giảng',
+    description: 'Hệ thống quản lý thù lao và lịch làm việc thông minh dành cho trợ giảng SPeanut.',
+    images: ['/peanut.png'],
   },
 };
 
