@@ -4,7 +4,6 @@ import styles from '../styles/Calendar.module.css'
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SkeletonCard } from '../components/Loader';
 import { fetchProfile, updateProfile } from '../services/profile';
-import { InteractiveTour } from '../components/Guide'
 
 declare global {
   interface Window {
@@ -828,8 +827,6 @@ export default function CalendarView({
 
         </div>
       </aside>
-
-      <InteractiveTour activeNav={activeNav} />
     </div>
   );
 }

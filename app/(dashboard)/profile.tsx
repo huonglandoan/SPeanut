@@ -609,7 +609,7 @@ export default function ProfileView({ activeNav, setActiveNav }: ProfileViewProp
           className={profileStyles.guideBtn}
         >
           <HelpCircle size={18} />
-          Peanut Hướng dẫn sử dụng
+          Hướng dẫn sử dụng
         </button>
 
         <button

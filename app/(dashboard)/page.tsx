@@ -10,6 +10,7 @@ import SalaryView from './salary'
 import ProfileView from './profile'
 import Image from 'next/image'
 import { PeanutLoader } from '../components/Loader'
+import { InteractiveTour, ClassTour } from '../components/Guide'
 
 
 import { BookOpen, Calendar, Wallet, User, Heart } from "lucide-react";
@@ -149,6 +150,8 @@ export default function DashboardPage() {
         </div>
       </nav>
     </div>
+    <InteractiveTour activeNav={activeNav} setActiveNav={setActiveNav} />
+    <ClassTour activeNav={activeNav} />
    </div>
   );
 }
