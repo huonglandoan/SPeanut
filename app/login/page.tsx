@@ -8,8 +8,8 @@ import { LoginWithAPI } from '../services/auth'
 import styles from '../styles/Login.module.css'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('user');
-  const [password, setPassword] = useState('123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false); // Đã sửa chính tả setLoanding -> setLoading
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);

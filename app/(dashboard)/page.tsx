@@ -19,7 +19,7 @@ export default function DashboardPage() {
   const [year, setYear] = useState(2026)
   const [month, setMonth] = useState(4)
   const [selected, setSelected] = useState(2)
-  const [activeNav, setActiveNav] = useState(3)
+  const [activeNav, setActiveNav] = useState(1)
   
   const [loading, setLoading] = useState(true)
   const router = useRouter()
@@ -74,12 +74,47 @@ export default function DashboardPage() {
     }
   }, []);
 
-  // Nếu đang kiểm tra thông tin, hiện màn hình chờ trắng để bảo mật
+  // Nếu đang kiểm tra thông tin, hiện màn hình chờ với peanut xoay tròn
   if (loading) {
-    const appName = (typeof window !== 'undefined' && localStorage.getItem('speanut_config_company_name')) || 'SPeanut';
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#fff' }}>
-        <p style={{ fontSize: '16px', color: '#666' }}>Đang xác thực quyền truy cập {appName}...</p>
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: '#fdf6ec',
+        zIndex: 9999,
+      }}>
+        <style>{`
+          @keyframes spin-peanut {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+        <div style={{
+          width: '20px',
+          height: '20px',
+          borderRadius: '50%',
+          overflow: 'hidden',
+          animation: 'spin-peanut 1.2s linear infinite',
+          flexShrink: 0,
+        }}>
+          <img
+            src="/peanut.png"
+            alt="SPeanut"
+            style={{
+              width: '110%',
+              height: '110%',
+              objectFit: 'cover',
+              objectPosition: 'center',
+              marginLeft: '-5%',
+              marginTop: '-5%',
+              display: 'block',
+            }}
+          />
+        </div>
       </div>
     )
   }
