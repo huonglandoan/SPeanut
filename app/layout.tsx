@@ -36,9 +36,9 @@ export const metadata: Metadata = {
     siteName: 'SPeanut',
     images: [
       {
-        url: 'https://s-peanut.vercel.app/peanut.png',
-        width: 512,
-        height: 512,
+        url: 'https://s-peanut.vercel.app/og-image.png',
+        width: 1200,
+        height: 630,
         alt: 'SPeanut Logo',
       },
     ],
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'SPeanut',
     description: 'Hệ thống quản lý thù lao và lịch làm việc thông minh dành cho trợ giảng SPeanut.',
-    images: ['https://s-peanut.vercel.app/peanut.png'],
+    images: ['https://s-peanut.vercel.app/og-image.png'],
   },
 };
 
@@ -66,16 +66,16 @@ export default function RootLayout({
         <meta property="og:url" content="https://s-peanut.vercel.app" />
         <meta property="og:title" content="SPeanut" />
         <meta property="og:description" content="Hệ thống quản lý thù lao và lịch làm việc thông minh dành cho trợ giảng SPeanut." />
-        <meta property="og:image" content="https://s-peanut.vercel.app/peanut.png" />
-        <meta property="og:image:width" content="512" />
-        <meta property="og:image:height" content="512" />
+        <meta property="og:image" content="https://s-peanut.vercel.app/og-image.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:url" content="https://s-peanut.vercel.app" />
         <meta name="twitter:title" content="SPeanut" />
         <meta name="twitter:description" content="Hệ thống quản lý thù lao và lịch làm việc thông minh dành cho trợ giảng SPeanut." />
-        <meta name="twitter:image" content="https://s-peanut.vercel.app/peanut.png" />
+        <meta name="twitter:image" content="https://s-peanut.vercel.app/og-image.png" />
 
         <script
           dangerouslySetInnerHTML={{
