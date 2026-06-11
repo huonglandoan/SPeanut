@@ -477,6 +477,120 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
     document.body.removeChild(link);
   };
 
+  const exportAllPayrollsToPDF = async () => {
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF } = await import('jspdf');
+
+      const printContainer = document.createElement('div');
+      printContainer.style.position = 'absolute';
+      printContainer.style.left = '-9999px';
+      printContainer.style.top = '-9999px';
+      printContainer.style.width = '800px';
+      printContainer.style.padding = '35px';
+      printContainer.style.boxSizing = 'border-box';
+      printContainer.style.backgroundColor = '#ffffff';
+      printContainer.style.color = '#1E293B';
+      printContainer.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+
+      printContainer.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 25px; border-bottom: 1px solid #E2E8F0; padding-bottom: 15px;">
+          <img src="/peanut.png" style="width: 28px; height: 28px; object-fit: contain;" alt="SPeanut logo" />
+          <span style="font-size: 20px; font-weight: 800; color: #735BF2; letter-spacing: 0.5px;">SPeanut</span>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 25px;">
+          <h2 style="margin: 0; font-size: 18px; font-weight: 700; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px;">BẢNG LƯƠNG TỔNG HỢP GIA SƯ</h2>
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: #64748B; font-weight: 600;">Tháng ${month} / Năm ${year}</p>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 11px;">
+          <thead>
+            <tr style="background-color: #735BF2; color: #ffffff;">
+              <th style="padding: 10px 8px; border: 1px solid #735BF2; font-weight: 600; text-align: center; font-size: 10px; text-transform: uppercase;">STT</th>
+              <th style="padding: 10px 8px; border: 1px solid #735BF2; font-weight: 600; font-size: 10px; text-transform: uppercase;">Họ tên gia sư / Email</th>
+              <th style="padding: 10px 8px; border: 1px solid #735BF2; font-weight: 600; text-align: center; font-size: 10px; text-transform: uppercase;">Số buổi</th>
+              <th style="padding: 10px 8px; border: 1px solid #735BF2; font-weight: 600; text-align: right; font-size: 10px; text-transform: uppercase;">Lương cứng</th>
+              <th style="padding: 10px 8px; border: 1px solid #735BF2; font-weight: 600; text-align: right; font-size: 10px; text-transform: uppercase;">Thưởng thêm</th>
+              <th style="padding: 10px 8px; border: 1px solid #735BF2; font-weight: 600; text-align: right; font-size: 10px; text-transform: uppercase;">Tổng nhận</th>
+              <th style="padding: 10px 8px; border: 1px solid #735BF2; font-weight: 600; font-size: 10px; text-transform: uppercase;">Thông tin chuyển khoản</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${visibleUsers.map((u, idx) => {
+              const stats = userSalaries[u.id] || { totalSalary: 0, totalExtra: 0, totalEarnings: 0, totalActive: 0 };
+              const bankText = u.bank_brand ? `${u.bank_owner}<br/><span style="color: #64748B; font-size: 9.5px;">STK: ${u.bank_number} (${u.bank_brand})</span>` : '<span style="font-style: italic; color: #94A3B8;">Chưa liên kết</span>';
+              return `
+                <tr style="background-color: ${idx % 2 === 0 ? '#ffffff' : '#F8FAFC'};">
+                  <td style="padding: 10px 8px; border: 1px solid #E2E8F0; text-align: center; font-weight: 600; color: #475569;">${idx + 1}</td>
+                  <td style="padding: 10px 8px; border: 1px solid #E2E8F0; font-weight: 600; color: #0F172A;">
+                    <div>${u.full_name || 'Chưa đặt tên'}</div>
+                    <div style="font-size: 9px; color: #64748B; font-weight: 400;">${u.email}</div>
+                  </td>
+                  <td style="padding: 10px 8px; border: 1px solid #E2E8F0; text-align: center; font-weight: 600; color: #334155;">${stats.totalActive} buổi</td>
+                  <td style="padding: 10px 8px; border: 1px solid #E2E8F0; text-align: right; color: #334155;">${stats.totalSalary.toLocaleString()}đ</td>
+                  <td style="padding: 10px 8px; border: 1px solid #E2E8F0; text-align: right; color: #10B981; font-weight: 600;">+${stats.totalExtra.toLocaleString()}đ</td>
+                  <td style="padding: 10px 8px; border: 1px solid #E2E8F0; text-align: right; font-weight: 700; color: #735BF2;">${stats.totalEarnings.toLocaleString()}đ</td>
+                  <td style="padding: 10px 8px; border: 1px solid #E2E8F0; color: #0F172A; line-height: 1.3;">${bankText}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+
+      document.body.appendChild(printContainer);
+
+      // Wait for logo image to load to guarantee it is rendered in canvas
+      await new Promise(resolve => {
+        const img = printContainer.querySelector('img');
+        if (img) {
+          if (img.complete) {
+            resolve(true);
+          } else {
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(true);
+          }
+        } else {
+          resolve(true);
+        }
+      });
+
+      const canvas = await html2canvas(printContainer, {
+        scale: 2.2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false
+      });
+
+      document.body.removeChild(printContainer);
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`Bang_luong_tong_hop_thang_${month}_${year}.pdf`);
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      alert('Đã xảy ra lỗi khi tạo file PDF. Vui lòng thử lại.');
+    }
+  };
+
   const MONTHS = [
     "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
     "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
@@ -509,13 +623,6 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
               <ChevronRight size={18} />
             </button>
           </div>
-          <button 
-            onClick={() => { window.location.href = '/deploy'; }} 
-            className={styles.adminLogoutBtn}
-            style={{ marginRight: '8px', color: '#00b383', borderColor: 'rgba(0, 179, 131, 0.2)' }}
-          >
-            Cấu hình Deploy
-          </button>
           <button onClick={handleLogout} className={styles.adminLogoutBtn}>
             Đăng xuất
           </button>
@@ -579,7 +686,11 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
                   />
                   <button type="button" onClick={exportAllPayrollsToCSV} className={styles.exportAllBtn}>
                     <Download size={16} />
-                    Tải xuống Excel (CSV)
+                    Excel
+                  </button>
+                  <button type="button" onClick={exportAllPayrollsToPDF} className={styles.exportPdfBtn}>
+                    <Download size={16} />
+                    PDF
                   </button>
                 </div>
               </div>

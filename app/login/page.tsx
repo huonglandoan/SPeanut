@@ -123,13 +123,6 @@ return (
           Đăng ký ngay
         </Link>
       </p>
-
-      <p className={styles.textMuted} style={{ marginTop: '12px', fontSize: '12px' }}>
-        Thiết lập hệ thống?{' '}
-        <Link href="/deploy" style={{ color: 'var(--primary, #735bf2)', fontWeight: 600, textDecoration: 'none' }}>
-          Cấu hình & Deploy
-        </Link>
-      </p>
     </form>
   </div>
 );

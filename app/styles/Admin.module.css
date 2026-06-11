@@ -543,6 +543,31 @@
   transform: translateY(0);
 }
 
+.exportPdfBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background-color: var(--primary, #735BF2);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(115, 91, 242, 0.2);
+  transition: all 0.2s ease;
+}
+
+.exportPdfBtn:hover {
+  background-color: #5d45d6;
+  transform: translateY(-1px);
+}
+
+.exportPdfBtn:active {
+  transform: translateY(0);
+}
+
 /* ── Classes List Tab ────────────────────────────────────────────── */
 .classesGrid {
   display: grid;
