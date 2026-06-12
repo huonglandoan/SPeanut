@@ -92,8 +92,8 @@ if (typeof window !== 'undefined') {
           }
         }
 
-        headersObj['x-supabase-url'] = customUrl;
-        headersObj['x-supabase-anon-key'] = customAnonKey;
+        headersObj['x-supabase-url'] = customUrl!;
+        headersObj['x-supabase-anon-key'] = customAnonKey!;
         init.headers = headersObj;
       }
     }
