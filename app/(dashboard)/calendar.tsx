@@ -79,6 +79,14 @@ function dateKey(y: number, m: number, d: number) {
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
+function getCookie(name: string) {
+  if (typeof document === 'undefined') return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+}
+
 function EventCard({ ev, onClick }: { ev: any; onClick?: () => void }) {
   const cardClassName = [
     styles.eventCard,
@@ -309,7 +317,21 @@ export default function CalendarView({
     }
   };
 
-  const handleGoogleSync = () => {
+  const handleGoogleSync = async () => {
+    // 1. Thử đồng bộ tự động bằng token lưu trong cookie
+    const providerToken = getCookie('google_provider_token');
+    if (providerToken) {
+      setSyncing(true);
+      setSyncProgress('Đang tự động đồng bộ qua Google token...');
+      try {
+        await startCalendarSync(providerToken);
+        return;
+      } catch (err: any) {
+        console.warn("Đồng bộ qua token trong cookie thất bại, chuyển sang xác thực popup:", err);
+      }
+    }
+
+    // 2. Fallback sang mở popup xác thực Google (GIS)
     const clientId = (typeof window !== 'undefined' && localStorage.getItem('speanut_config_google_client_id')) || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     if (!clientId) {
       alert("Lỗi: Chưa cấu hình Google Client ID! Vui lòng truy cập trang /deploy để thiết lập thông số.");

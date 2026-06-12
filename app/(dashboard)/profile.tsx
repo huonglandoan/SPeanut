@@ -614,7 +614,13 @@ export default function ProfileView({ activeNav, setActiveNav }: ProfileViewProp
 
         <button
           type="button"
-          onClick={() => supabase.auth.signOut()}
+          onClick={async () => {
+            if (typeof document !== 'undefined') {
+              document.cookie = 'google_provider_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+              document.cookie = 'google_provider_refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            }
+            await supabase.auth.signOut();
+          }}
           className={profileStyles.signOutBtn}
         >
           <LogOut size={18} />
