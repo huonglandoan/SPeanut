@@ -10,14 +10,26 @@ const defaultSupabase = typeof window !== 'undefined'
   ? createBrowserClient(ENV_URL, ENV_KEY)
   : (null as any);
 
+// Hàm kiểm tra tính hợp lệ của Supabase Config tùy biến
+function isValidSupabaseConfig(url: string | null, key: string | null): boolean {
+  if (!url || !key) return false;
+  const trimmedUrl = url.trim();
+  const trimmedKey = key.trim();
+  return (
+    (trimmedUrl.startsWith('https://') || trimmedUrl.startsWith('http://')) &&
+    trimmedKey.startsWith('eyJ') &&
+    trimmedKey.split('.').length === 3
+  );
+}
+
 // Hàm lấy client đang hoạt động (tùy biến từ localStorage hoặc mặc định)
 const getActiveClient = () => {
   if (typeof window !== 'undefined') {
     const customUrl = localStorage.getItem('speanut_config_supabase_url');
     const customAnonKey = localStorage.getItem('speanut_config_supabase_anon_key');
-    if (customUrl && customAnonKey) {
+    if (isValidSupabaseConfig(customUrl, customAnonKey)) {
       try {
-        return createBrowserClient(customUrl, customAnonKey);
+        return createBrowserClient(customUrl!.trim(), customAnonKey!.trim());
       } catch (e) {
         console.error("Lỗi khởi tạo custom Supabase client:", e);
       }
@@ -46,7 +58,8 @@ if (typeof window !== 'undefined') {
     const customUrl = localStorage.getItem('speanut_config_supabase_url');
     const customAnonKey = localStorage.getItem('speanut_config_supabase_anon_key');
 
-    if (customUrl && customAnonKey) {
+    if (isValidSupabaseConfig(customUrl, customAnonKey)) {
+
       let urlStr = '';
       if (typeof input === 'string') {
         urlStr = input;

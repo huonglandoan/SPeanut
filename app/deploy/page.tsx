@@ -186,22 +186,32 @@ export default function DeployConfigPage() {
             <label className={styles.label}>Supabase Project URL</label>
             <input 
               type="url" 
-              placeholder="https://your-project.supabase.co"
+              placeholder={process.env.NEXT_PUBLIC_SUPABASE_URL || "https://your-project.supabase.co"}
               value={supabaseUrl}
               onChange={(e) => setSupabaseUrl(e.target.value)}
               className={styles.input}
             />
+            {process.env.NEXT_PUBLIC_SUPABASE_URL && !supabaseUrl && (
+              <span style={{ fontSize: '12px', color: '#00b383', marginTop: '6px', display: 'block' }}>
+                ✓ Đang sử dụng Project URL mặc định từ file cấu hình (.env) cho mọi người dùng.
+              </span>
+            )}
           </div>
 
           <div className={styles.formGroup}>
             <label className={styles.label}>Supabase Anon Public Key (Khóa API Công khai)</label>
             <input 
               type="password" 
-              placeholder="eyJhbGciOi..."
+              placeholder={process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "••••••••••••••••" : "eyJhbGciOi..."}
               value={supabaseAnonKey}
               onChange={(e) => setSupabaseAnonKey(e.target.value)}
               className={styles.input}
             />
+            {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && !supabaseAnonKey && (
+              <span style={{ fontSize: '12px', color: '#00b383', marginTop: '6px', display: 'block' }}>
+                ✓ Đang sử dụng Anon Key mặc định từ file cấu hình (.env) cho mọi người dùng.
+              </span>
+            )}
           </div>
 
           <h3 className={styles.sectionTitle} style={{ marginTop: '32px' }}>Đồng bộ Lịch (Google Calendar API)</h3>
@@ -210,12 +220,18 @@ export default function DeployConfigPage() {
             <label className={styles.label}>Google OAuth2 Client ID</label>
             <input 
               type="text" 
-              placeholder="123456789-abc123xyz.apps.googleusercontent.com"
+              placeholder={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "123456789-abc123xyz.apps.googleusercontent.com"}
               value={googleClientId}
               onChange={(e) => setGoogleClientId(e.target.value)}
               className={styles.input}
             />
+            {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && !googleClientId && (
+              <span style={{ fontSize: '12px', color: '#00b383', marginTop: '6px', display: 'block' }}>
+                ✓ Đang sử dụng Google Client ID mặc định từ file cấu hình (.env). Tất cả người dùng đăng nhập sẽ tự động được sử dụng Client ID này mà không cần thiết lập thủ công.
+              </span>
+            )}
           </div>
+
 
           <div className={styles.btnRow}>
             <button 

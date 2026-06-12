@@ -2,6 +2,17 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies, headers } from 'next/headers';
 
+function isValidSupabaseConfig(url: string | null, key: string | null): boolean {
+  if (!url || !key) return false;
+  const trimmedUrl = url.trim();
+  const trimmedKey = key.trim();
+  return (
+    (trimmedUrl.startsWith('https://') || trimmedUrl.startsWith('http://')) &&
+    trimmedKey.startsWith('eyJ') &&
+    trimmedKey.split('.').length === 3
+  );
+}
+
 export async function createClient() {
   let url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
   let anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJplaceholder';
@@ -10,13 +21,14 @@ export async function createClient() {
     const reqHeaders = await headers();
     const customUrl = reqHeaders.get('x-supabase-url');
     const customAnonKey = reqHeaders.get('x-supabase-anon-key');
-    if (customUrl && customAnonKey) {
-      url = customUrl;
-      anonKey = customAnonKey;
+    if (isValidSupabaseConfig(customUrl, customAnonKey)) {
+      url = customUrl!.trim();
+      anonKey = customAnonKey!.trim();
     }
   } catch (e) {
     // Falls back to defaults if called in static build context or other scenarios
   }
+
 
   const cookieStore = await cookies();
 
