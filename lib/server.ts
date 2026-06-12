@@ -33,3 +33,47 @@ export async function createClient() {
     },
   });
 }
+
+/**
+ * Đảm bảo thông tin user tồn tại trong bảng public.users để không bị lỗi khóa ngoại khi tạo lớp
+ */
+export async function ensureUserProfileExists(supabaseServer: any, user: any) {
+  if (!user) return;
+  try {
+    const { data: profile, error } = await supabaseServer
+      .from('users')
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (!profile && !error) {
+      console.log(`[auth-sync] Profile for user ${user.id} not found in public.users. Creating it dynamically...`);
+      const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+      const { error: insertError } = await supabaseServer
+        .from('users')
+        .insert({
+          id: user.id,
+          email: user.email,
+          full_name: fullName
+        });
+      if (insertError) {
+        console.error("[auth-sync] Lỗi tự động tạo profile trong public.users:", insertError);
+      }
+    }
+  } catch (err) {
+    console.error("[auth-sync] Không thể kiểm tra hoặc tạo profile người dùng:", err);
+  }
+}
+
+/**
+ * Hàm lấy userId đã được xác thực và đảm bảo profile của họ tồn tại trong public.users
+ */
+export async function getAuthenticatedUserId() {
+  const supabaseServer = await createClient();
+  const { data: { user } } = await supabaseServer.auth.getUser();
+  if (!user) return null;
+
+  await ensureUserProfileExists(supabaseServer, user);
+
+  return user.id;
+}

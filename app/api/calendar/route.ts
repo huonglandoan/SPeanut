@@ -1,12 +1,6 @@
 import { NextResponse } from 'next/server';
 import { CalendarService } from '../../services/calendar';
-import { createClient } from "@/lib/server";
-
-async function getAuthenticatedUserId() {
-    const supabaseServer = await createClient();
-    const { data: { user } } = await supabaseServer.auth.getUser();
-    return user?.id || null;
-}
+import { createClient, getAuthenticatedUserId } from "@/lib/server";
 
 export async function GET() {
     try {

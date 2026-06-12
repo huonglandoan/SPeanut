@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/server';
+import { createClient, ensureUserProfileExists } from '@/lib/server';
 
 /**
  * GET /api/profile
@@ -16,6 +16,9 @@ export async function GET() {
         { status: 401 }
       );
     }
+
+    // Đảm bảo profile người dùng đã tồn tại trong public.users trước khi truy vấn
+    await ensureUserProfileExists(supabaseServer, session.user);
 
     // Lấy đầy đủ các cột thông tin người dùng bao gồm avatar, qr_code, các trường ngân hàng, extra_incomes và cancelled_sessions.
     const selectStr = 'id, email, full_name, avatar, bank_brand, bank_number, bank_owner, qr_code, extra_incomes, cancelled_sessions';
@@ -95,6 +98,9 @@ export async function PUT(request: Request) {
         { status: 401 }
       );
     }
+
+    // Đảm bảo profile người dùng đã tồn tại trong public.users trước khi cập nhật
+    await ensureUserProfileExists(supabaseServer, session.user);
 
     const body = await request.json();
 
