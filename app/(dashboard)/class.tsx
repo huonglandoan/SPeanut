@@ -33,6 +33,9 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
   const [editEndTime, setEditEndTime] = useState('20:00');
   const [editSelectedDays, setEditSelectedDays] = useState<number[]>([]);
   const [editValidFrom, setEditValidFrom] = useState(new Date().toISOString().split('T')[0]);
+  const [editName, setEditName] = useState('');
+  const [editRatePerSession, setEditRatePerSession] = useState('');
+  const [editRateEffectiveDate, setEditRateEffectiveDate] = useState('');
 
   // --- STATE QUẢN LÝ NHÓM LỚP MỞ RỘNG (các tháng cũ) ---
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
@@ -41,9 +44,24 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
 
   const fetchClasses = async () => {
     try {
-       const res = await fetch('/api/class');
-       const data = await res.json();
-       if (!res.ok) throw new Error(data.error || "Lỗi tải danh sách.");
+      if (typeof window !== 'undefined' && localStorage.getItem('speanut_tour_mode') === 'true') {
+        const storedClasses = localStorage.getItem('speanut_tour_classes');
+        if (storedClasses) {
+          setClasses(JSON.parse(storedClasses));
+        } else {
+          const defaultClasses: GroupedClassDisplay[] = [
+            { id: 9001, name: "Toán 7", short_name: "T7", rate_per_session: 150000, type: "FIXED", days: ["T2"], start_time: "18:00", end_time: "20:00", valid_from: "2026-01-01" },
+            { id: 9002, name: "Anh 8", short_name: "A8", rate_per_session: 180000, type: "FIXED", days: ["T3"], start_time: "19:30", end_time: "21:30", valid_from: "2026-01-01" },
+            { id: 9003, name: "Lý 11", short_name: "L11", rate_per_session: 200000, type: "FIXED", days: ["T5"], start_time: "17:00", end_time: "19:00", valid_from: "2026-01-01" },
+          ];
+          setClasses(defaultClasses);
+          localStorage.setItem('speanut_tour_classes', JSON.stringify(defaultClasses));
+        }
+        return;
+      }
+      const res = await fetch('/api/class');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Lỗi tải danh sách.");
       setClasses(data);
     } catch (err: any) {
       setError(err.message);
@@ -56,6 +74,24 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
     }
   }, [activeNav]);
 
+  // Tự động điền dữ liệu mẫu khi ở chế độ Tour chạy thử (Bước 7)
+  useEffect(() => {
+    if (
+      typeof window !== 'undefined' && 
+      localStorage.getItem('speanut_tour_mode') === 'true' && 
+      localStorage.getItem('speanut_tour_step') === '7' && 
+      activeTab === 'CREATE'
+    ) {
+      setName("Hóa 10");
+      setShort_Name("H10");
+      setRate_Per_Session("250000");
+      setClassType("FIXED");
+      setSelectedDays([1, 3]); // Thứ 2 (1), Thứ 4 (3)
+      setStart_Time("17:30");
+      setEnd_Time("19:30");
+    }
+  }, [activeTab]);
+
   const toggleDay = (dayIndex: number, isEdit: boolean) => {
     if (isEdit) {
       setEditSelectedDays(prev => prev.includes(dayIndex) ? prev.filter(d => d !== dayIndex) : [...prev, dayIndex]);
@@ -65,31 +101,65 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
   };
 
   const handleConfirmChangeSchedule = async (classId: number) => {
-    if (editSelectedDays.length === 0) {
-      alert("Vui lòng chọn ít nhất một thứ mới.");
-      return;
-    }
     setLoading(true); setError(null); setSuccess(null);
     try {
+      const originalClass = classes.find(c => c.id === classId);
+      if (!originalClass) throw new Error("Không tìm thấy thông tin lớp học gốc.");
+
+      const payload: any = { classId };
+
+      // 1. Kiểm tra thay đổi tên
+      if (editName.trim() && editName.trim() !== originalClass.name) {
+        payload.name = editName.trim();
+      }
+
+      // 2. Kiểm tra thay đổi thù lao
+      if (editRatePerSession && Number(editRatePerSession) !== originalClass.rate_per_session) {
+        payload.rate_per_session = Number(editRatePerSession);
+        if (editRateEffectiveDate) {
+          payload.effectiveDate = editRateEffectiveDate;
+        }
+      }
+
+      // 3. Kiểm tra thay đổi lịch dạy (chỉ áp dụng cho lớp FIXED)
+      if (originalClass.type === 'FIXED') {
+        const currentDaysIndices = (originalClass.days || []).map(d => daysOfWeekLabels.indexOf(d)).filter(idx => idx !== -1);
+        const daysChanged = JSON.stringify([...editSelectedDays].sort()) !== JSON.stringify([...currentDaysIndices].sort());
+        const timesChanged = editStartTime !== originalClass.start_time || editEndTime !== originalClass.end_time;
+
+        if (daysChanged || timesChanged) {
+          if (editSelectedDays.length === 0) {
+            alert("Vui lòng chọn ít nhất một thứ mới cho lịch học cố định.");
+            setLoading(false);
+            return;
+          }
+          payload.editSelectedDays = editSelectedDays;
+          payload.editValidFrom = editValidFrom;
+          payload.editStartTime = editStartTime;
+          payload.editEndTime = editEndTime;
+        }
+      }
+
+      // Nếu không có bất kỳ thay đổi nào
+      if (Object.keys(payload).length === 1) {
+        setChangingScheduleClassId(null);
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch('/api/class', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          classId,
-          editSelectedDays,
-          editValidFrom,
-          editStartTime,
-          editEndTime
-        })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || "Không thể cập nhật lớp học.");
 
-      setSuccess("Đổi lịch dạy thành công!");
+      setSuccess("Cập nhật lớp học thành công!");
       setChangingScheduleClassId(null);
       fetchClasses();
     } catch (err: any) {
-      setError(err.message || "Có lỗi xảy ra khi đổi lịch.");
+      setError(err.message || "Có lỗi xảy ra khi cập nhật lớp.");
     } finally { setLoading(false); }
   };
 
@@ -98,7 +168,14 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
     setEditStartTime(cls.start_time || '18:00');
     setEditEndTime(cls.end_time || '20:00');
     setEditValidFrom(new Date().toISOString().split('T')[0]);
-    setEditSelectedDays([]);
+    // Khởi tạo các thứ đã chọn trước đó
+    const currentDaysIndices = (cls.days || []).map(d => daysOfWeekLabels.indexOf(d)).filter(idx => idx !== -1);
+    setEditSelectedDays(currentDaysIndices);
+
+    // Khởi tạo tên và thù lao
+    setEditName(cls.name);
+    setEditRatePerSession(String(cls.rate_per_session));
+    setEditRateEffectiveDate(''); // Để trống ngày áp dụng thù lao mới mặc định
   };
 
   const handleRepeatClassForNextMonth = async (classId: number) => {
@@ -154,6 +231,69 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
 
     setLoading(true);
     try {
+      if (typeof window !== 'undefined' && localStorage.getItem('speanut_tour_mode') === 'true') {
+        await new Promise(r => setTimeout(r, 500));
+        const newClass: GroupedClassDisplay = {
+          id: Date.now(),
+          name: name.trim(),
+          short_name: short_name.trim(),
+          rate_per_session: Number(rate_per_session),
+          type: classType,
+          days: classType === 'FIXED' ? selectedDays.map(d => daysOfWeekLabels[d]) : [],
+          start_time,
+          end_time,
+          valid_from
+        };
+        const updatedClasses = [newClass, ...classes];
+        setClasses(updatedClasses);
+        localStorage.setItem('speanut_tour_classes', JSON.stringify(updatedClasses));
+
+        // Sync local schedules
+        const storedSchedules = localStorage.getItem('speanut_tour_schedules');
+        const schedulesList = storedSchedules ? JSON.parse(storedSchedules) : [];
+        if (classType === 'FIXED') {
+          selectedDays.forEach(day => {
+            schedulesList.push({
+              id: Date.now() + day,
+              class_id: newClass.id,
+              name: newClass.name,
+              short_name: newClass.short_name,
+              rate_per_session: newClass.rate_per_session,
+              type: classType,
+              day_of_week: day,
+              start_time,
+              end_time,
+              valid_from,
+              valid_to: null
+            });
+          });
+        } else {
+          schedulesList.push({
+            id: Date.now(),
+            class_id: newClass.id,
+            name: newClass.name,
+            short_name: newClass.short_name,
+            rate_per_session: newClass.rate_per_session,
+            type: classType,
+            day_of_week: new Date(valid_from).getDay(),
+            start_time,
+            end_time,
+            valid_from,
+            valid_to: null
+          });
+        }
+        localStorage.setItem('speanut_tour_schedules', JSON.stringify(schedulesList));
+
+        setSuccess("Tạo lớp thành công!");
+        setName(''); setShort_Name(''); setRate_Per_Session(''); setSelectedDays([]);
+        setLoading(false);
+        setActiveTab('LIST');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('speanut_tour_event', { detail: { type: 'class_created', class: newClass } }));
+        }
+        return;
+      }
+
       const res = await fetch('/api/class', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -235,7 +375,15 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
         </button>
         <button 
           type="button" 
-          onClick={() => { setActiveTab('CREATE'); setError(null); setSuccess(null); }}
+          id="tour-create-class-tab"
+          onClick={() => { 
+            setActiveTab('CREATE'); 
+            setError(null); 
+            setSuccess(null); 
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('speanut_tour_event', { detail: { type: 'class_tab_changed', activeTab: 'CREATE' } }));
+            }
+          }}
           className={activeTab === 'CREATE' ? styles.dayBtnActive : styles.dayBtn}
         >
           Tạo lớp mới
@@ -318,35 +466,88 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
                     </div>
                   </div>
 
-                  {/* KHUNG ĐỔI LỊCH DẠY (BUNG NỞ INLINE) */}
+                  {/* KHUNG CHỈNH SỬA LỚP HỌC (BUNG NỞ INLINE) */}
                   {changingScheduleClassId === newest.id && (
                     <div className={styles.inlineEditPanel} style={{ width: '100%', gridColumn: '1 / -1', marginTop: '10px' }}>
-                      <p className={styles.editPanelTitle}><Settings size={16}/> Đổi lịch mới:</p>
-                      <div className={styles.fieldRow} style={{ display: 'flex', gap: '8px' }}>
-                        <div style={{ flex: 1 }}>
-                          <input type="time" className={styles.fieldInput} value={editStartTime} onChange={(e) => setEditStartTime(e.target.value)} />
+                      <p className={styles.editPanelTitle}><Settings size={16}/> Chỉnh sửa lớp học:</p>
+                      
+                      {/* Tên lớp & Thù lao */}
+                      <div className={styles.fieldPanel} style={{ marginBottom: '10px' }}>
+                        <label className={styles.fieldLabel}>Tên lớp học:</label>
+                        <input 
+                          type="text" 
+                          className={styles.fieldInput} 
+                          value={editName} 
+                          onChange={(e) => setEditName(e.target.value)} 
+                          placeholder="Tên lớp học..."
+                        />
+                      </div>
+
+                      <div className={styles.fieldRow} style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <label className={styles.fieldLabel}>Thù lao / buổi:</label>
+                          <input 
+                            type="number" 
+                            className={styles.fieldInput} 
+                            value={editRatePerSession} 
+                            onChange={(e) => setEditRatePerSession(e.target.value)} 
+                            placeholder="Thù lao..."
+                          />
                         </div>
-                        <div style={{ flex: 1 }}>
-                          <input type="time" className={styles.fieldInput} value={editEndTime} onChange={(e) => setEditEndTime(e.target.value)} />
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <label className={styles.fieldLabel}>Lương mới áp dụng từ ngày:</label>
+                          <input 
+                            type="date" 
+                            className={styles.fieldInput} 
+                            value={editRateEffectiveDate} 
+                            onChange={(e) => setEditRateEffectiveDate(e.target.value)} 
+                          />
                         </div>
                       </div>
-                      <div style={{ margin: '8px 0' }}>
-                        <input type="date" className={styles.fieldInput} value={editValidFrom} onChange={(e) => setEditValidFrom(e.target.value)} />
-                      </div>
-                      <div className={styles.weekGrid} style={{ marginBottom: '12px' }}>
-                        {daysOfWeekLabels.map((label, index) => (
-                          <button 
-                            key={index} 
-                            type="button" 
-                            onClick={() => toggleDay(index, true)} 
-                            className={`${styles.dayBtn} ${editSelectedDays.includes(index) ? styles.dayBtnActive : ''}`}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <button type="button" onClick={() => handleConfirmChangeSchedule(newest.id)} disabled={loading} className={styles.buttonPrimary} style={{ margin: 0, width: '70%' }}>XÁC NHẬN</button>
+                      <p style={{ fontSize: '11px', color: '#86868b', marginTop: '-4px', marginBottom: '12px', paddingLeft: '8px', textAlign: 'left' }}>
+                        * Để trống ngày áp dụng nếu muốn thay đổi thù lao cho toàn bộ lịch sử lớp học. Điền ngày nếu muốn tách lương mới kể từ ngày đó.
+                      </p>
+
+                      {/* Lịch dạy (Chỉ hiển thị cho lớp FIXED) */}
+                      {newest.type === 'FIXED' && (
+                        <>
+                          <div className={styles.fieldPanel} style={{ marginBottom: '10px' }}>
+                            <label className={styles.fieldLabel}>Khung giờ học mới:</label>
+                            <div className={styles.fieldRow} style={{ display: 'flex', gap: '8px' }}>
+                              <div style={{ flex: 1 }}>
+                                <input type="time" className={styles.fieldInput} value={editStartTime} onChange={(e) => setEditStartTime(e.target.value)} />
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <input type="time" className={styles.fieldInput} value={editEndTime} onChange={(e) => setEditEndTime(e.target.value)} />
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className={styles.fieldPanel} style={{ marginBottom: '10px' }}>
+                            <label className={styles.fieldLabel}>Lịch mới áp dụng từ ngày:</label>
+                            <input type="date" className={styles.fieldInput} value={editValidFrom} onChange={(e) => setEditValidFrom(e.target.value)} />
+                          </div>
+
+                          <div className={styles.fieldPanel} style={{ marginBottom: '12px' }}>
+                            <label className={styles.fieldLabel}>Lịch dạy cố định hàng tuần mới:</label>
+                            <div className={styles.weekGrid}>
+                              {daysOfWeekLabels.map((label, index) => (
+                                <button 
+                                  key={index} 
+                                  type="button" 
+                                  onClick={() => toggleDay(index, true)} 
+                                  className={`${styles.dayBtn} ${editSelectedDays.includes(index) ? styles.dayBtnActive : ''}`}
+                                >
+                                  {label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '12px' }}>
+                        <button type="button" onClick={() => handleConfirmChangeSchedule(newest.id)} disabled={loading} className={styles.buttonPrimary} style={{ margin: 0, width: '70%' }}>LƯU THAY ĐỔI</button>
                         <button type="button" onClick={() => setChangingScheduleClassId(null)} className={styles.dayBtn} style={{ padding: '0', borderRadius: '9999px' }}>HỦY</button>
                       </div>
                     </div>
@@ -525,7 +726,7 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
           )}
 
           {/* NÚT SUBMIT */}
-          <button type="submit" className={styles.buttonPrimary} disabled={loading}>
+          <button type="submit" id="tour-create-class-submit" className={styles.buttonPrimary} disabled={loading}>
             {loading ? "ĐANG LƯU..." : "KHỞI TẠO LỚP HỌC"}
           </button>
         </form>

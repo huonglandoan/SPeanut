@@ -48,6 +48,7 @@ export function PeanutLoader({ size = 80, fullscreen = false }: LoaderProps) {
           height={size}
           style={{ objectFit: 'contain' }}
           className="rotatePeanut"
+          priority
         />
       </div>
     </div>

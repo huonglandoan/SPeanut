@@ -47,13 +47,14 @@ export const CalendarService = {
     schedulesData.forEach((sched: any) => {
       const cls = classesData.find(c => c.id === sched.class_id);
       if (cls) {
+        const scheduleType = sched.valid_from === sched.valid_to ? 'EXTRA' : cls.type;
         results.push({
           id: sched.id,
           class_id: sched.class_id,
           name: cls.name,
           short_name: cls.short_name,
           rate_per_session: cls.rate_per_session,
-          type: cls.type,
+          type: scheduleType,
           day_of_week: sched.day_of_week,
           start_time: sched.start_time,
           end_time: sched.end_time,

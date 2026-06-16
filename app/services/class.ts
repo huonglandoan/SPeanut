@@ -232,6 +232,129 @@ export const ClassService = {
   },
 
   /**
+   * Cập nhật thông tin chi tiết lớp học (tên, thù lao)
+   */
+  async updateClassDetails(input: { classId: number; userId: string; name?: string; rate_per_session?: number }): Promise<void> {
+    const supabase = await createClient();
+    const { classId, userId, name, rate_per_session } = input;
+
+    const updateData: any = {};
+    if (name) updateData.name = name.trim();
+    if (rate_per_session !== undefined) updateData.rate_per_session = Number(rate_per_session);
+
+    if (Object.keys(updateData).length === 0) return;
+
+    const { error } = await supabase
+      .from('classes')
+      .update(updateData)
+      .eq('id', classId)
+      .eq('user_id', userId);
+
+    if (error) throw error;
+  },
+
+  /**
+   * Tách lớp học để tăng/giảm thù lao từ một ngày hiệu lực nhất định
+   */
+  async splitClassRate(input: { classId: number; userId: string; rate_per_session: number; effectiveDate: string }): Promise<void> {
+    const supabase = await createClient();
+    const { classId, userId, rate_per_session, effectiveDate } = input;
+
+    // 1. Lấy thông tin lớp học hiện tại
+    const { data: cls, error: classErr } = await supabase
+      .from('classes')
+      .select('*')
+      .eq('id', classId)
+      .eq('user_id', userId)
+      .single();
+
+    if (classErr || !cls) {
+      throw new Error("Không tìm thấy lớp học hoặc bạn không có quyền chỉnh sửa.");
+    }
+
+    // 2. Lấy danh sách lịch học của lớp hiện tại
+    const { data: schedules, error: scheduleErr } = await supabase
+      .from('class_schedules')
+      .select('*')
+      .eq('class_id', classId);
+
+    if (scheduleErr || !schedules || schedules.length === 0) {
+      // Nếu không có lịch học nào, chỉ cần cập nhật thù lao trực tiếp
+      await this.updateClassDetails({ classId, userId, rate_per_session });
+      return;
+    }
+
+    // Tìm valid_from nhỏ nhất của các lịch học hiện tại
+    const minValidFrom = schedules.reduce((min, s) => s.valid_from < min ? s.valid_from : min, schedules[0].valid_from);
+
+    // Nếu ngày áp dụng mới nhỏ hơn hoặc bằng ngày bắt đầu của lớp học, cập nhật trực tiếp thù lao
+    if (effectiveDate <= minValidFrom) {
+      await this.updateClassDetails({ classId, userId, rate_per_session });
+      return;
+    }
+
+    // 3. Tính ngày trước ngày hiệu lực: effectiveDate - 1 ngày
+    const effDate = new Date(effectiveDate);
+    effDate.setDate(effDate.getDate() - 1);
+    const dayBeforeStr = effDate.toISOString().split('T')[0];
+
+    // 4. Tạo một lớp học mới làm bản sao
+    const { data: newClass, error: newClassErr } = await supabase
+      .from('classes')
+      .insert({
+        user_id: userId,
+        name: cls.name,
+        short_name: cls.short_name,
+        rate_per_session: Number(rate_per_session),
+        type: cls.type
+      })
+      .select()
+      .single();
+
+    if (newClassErr || !newClass) {
+      throw newClassErr ?? new Error("Không thể tạo lớp học bản sao để tăng lương.");
+    }
+
+    // 5. Xử lý lịch trình cũ và tạo lịch trình mới cho lớp mới
+    const newSchedulesToInsert = [];
+    
+    for (const s of schedules) {
+      if (s.valid_from < effectiveDate) {
+        // Cập nhật lịch cũ kết thúc trước ngày hiệu lực
+        const { error: updateSchErr } = await supabase
+          .from('class_schedules')
+          .update({ valid_to: dayBeforeStr })
+          .eq('id', s.id);
+        if (updateSchErr) throw updateSchErr;
+
+        // Tạo bản ghi mới cho lớp mới bắt đầu từ ngày hiệu lực
+        newSchedulesToInsert.push({
+          class_id: newClass.id,
+          day_of_week: s.day_of_week,
+          start_time: s.start_time,
+          end_time: s.end_time,
+          valid_from: effectiveDate,
+          valid_to: s.valid_to
+        });
+      } else {
+        // Lịch cũ này bắt đầu sau/tại ngày hiệu lực -> Chuyển thẳng sang lớp mới
+        const { error: moveSchErr } = await supabase
+          .from('class_schedules')
+          .update({ class_id: newClass.id })
+          .eq('id', s.id);
+        if (moveSchErr) throw moveSchErr;
+      }
+    }
+
+    if (newSchedulesToInsert.length > 0) {
+      const { error: insertErr } = await supabase
+        .from('class_schedules')
+        .insert(newSchedulesToInsert);
+      if (insertErr) throw insertErr;
+    }
+  },
+
+  /**
    * 4. Lặp lại lịch dạy của lớp FIXED sang tháng tiếp theo bắt đầu từ ngày 1
    *    → Tạo lớp MỚI (bản sao độc lập) để xóa tháng mới không ảnh hưởng tháng cũ
    */
@@ -318,6 +441,42 @@ export const ClassService = {
     if (insertError) throw insertError;
 
     return `${month}/${year}`;
+  },
+
+  /**
+   * Thêm lịch dạy bổ trợ (EXTRA) cho lớp học có sẵn
+   */
+  async addExtraSession(input: { classId: number; userId: string; date: string; start_time: string; end_time: string }): Promise<void> {
+    const supabase = await createClient();
+    const { classId, userId, date, start_time, end_time } = input;
+
+    // Xác nhận quyền sở hữu lớp học
+    const { data: cls, error: classErr } = await supabase
+      .from('classes')
+      .select('id')
+      .eq('id', classId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (classErr || !cls) {
+      throw new Error("Không tìm thấy lớp học hoặc bạn không có quyền thêm lịch dạy.");
+    }
+
+    const dateObj = new Date(date);
+    const dayOfWeek = dateObj.getDay(); // 0 = CN, 1 = T2, ..., 6 = T7
+
+    const { error: scheduleError } = await supabase
+      .from('class_schedules')
+      .insert({ 
+        class_id: classId, 
+        day_of_week: dayOfWeek, 
+        start_time: start_time, 
+        end_time: end_time, 
+        valid_from: date, 
+        valid_to: date 
+      });
+
+    if (scheduleError) throw scheduleError;
   },
 
   /**

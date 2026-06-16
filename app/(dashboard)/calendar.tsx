@@ -87,7 +87,7 @@ function getCookie(name: string) {
   return null;
 }
 
-function EventCard({ ev, onClick }: { ev: any; onClick?: () => void }) {
+function EventCard({ ev, onClick, id }: { ev: any; onClick?: () => void; id?: string }) {
   const cardClassName = [
     styles.eventCard,
     ev.isCancelled ? styles.eventCardCancelled : ""
@@ -109,7 +109,7 @@ function EventCard({ ev, onClick }: { ev: any; onClick?: () => void }) {
   ].filter(Boolean).join(" ");
 
   return (
-    <article className={cardClassName} onClick={onClick}>
+    <article id={id} className={cardClassName} onClick={onClick}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
         <span
           className={styles.cardDot}
@@ -318,6 +318,22 @@ export default function CalendarView({
   };
 
   const handleGoogleSync = async () => {
+    if (typeof window !== 'undefined' && localStorage.getItem('speanut_tour_mode') === 'true') {
+      setSyncing(true);
+      setSyncProgress('Đang kết nối API Google...');
+      await new Promise(r => setTimeout(r, 600));
+      setSyncProgress('Đồng bộ lịch dạy chạy thử...');
+      await new Promise(r => setTimeout(r, 600));
+      setSyncProgress('Đồng bộ ngày nghỉ chạy thử...');
+      await new Promise(r => setTimeout(r, 600));
+      setSyncing(false);
+      alert(`Đồng bộ thành công sang Google Calendar trong chế độ Chạy thử!`);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('speanut_tour_event', { detail: { type: 'google_sync_clicked' } }));
+      }
+      return;
+    }
+
     // 1. Thử đồng bộ tự động bằng token lưu trong cookie
     const providerToken = getCookie('google_provider_token');
     if (providerToken) {
@@ -426,6 +442,10 @@ export default function CalendarView({
     setCancelledSessions(updated);
     localStorage.setItem('speanut_cancelled_sessions', JSON.stringify(updated));
 
+    if (typeof window !== 'undefined' && localStorage.getItem('speanut_tour_mode') === 'true') {
+      return;
+    }
+
     if (profile) {
       try {
         const updatedProfile = await updateProfile({
@@ -443,6 +463,22 @@ export default function CalendarView({
     async function fetchCalendar() {
       try {
         setLoading(true);
+        if (typeof window !== 'undefined' && localStorage.getItem('speanut_tour_mode') === 'true') {
+          const stored = localStorage.getItem('speanut_tour_schedules');
+          if (stored) {
+            setSchedules(JSON.parse(stored));
+          } else {
+            const defaultSchedules = [
+              { id: 9001, class_id: 9001, name: "Toán 7", short_name: "T7", rate_per_session: 150000, type: "FIXED", day_of_week: 1, start_time: "18:00", end_time: "20:00", valid_from: "2026-01-01", valid_to: null },
+              { id: 9002, class_id: 9002, name: "Anh 8", short_name: "A8", rate_per_session: 180000, type: "FIXED", day_of_week: 2, start_time: "19:30", end_time: "21:30", valid_from: "2026-01-01", valid_to: null },
+              { id: 9003, class_id: 9003, name: "Lý 11", short_name: "L11", rate_per_session: 200000, type: "FIXED", day_of_week: 4, start_time: "17:00", end_time: "19:00", valid_from: "2026-01-01", valid_to: null },
+            ];
+            setSchedules(defaultSchedules);
+            localStorage.setItem('speanut_tour_schedules', JSON.stringify(defaultSchedules));
+          }
+          setLoading(false);
+          return;
+        }
         const res = await fetch('/api/calendar');
         if (!res.ok) throw new Error("Lỗi khi tải dữ liệu lịch biểu");
         const data = await res.json();
@@ -643,6 +679,7 @@ export default function CalendarView({
     <div className={styles.topLeftSyncContainer}>
       <button
         type="button"
+        id="tour-sync-btn"
         className={styles.syncBtnTop}
         onClick={handleGoogleSync}
         disabled={syncing}
@@ -714,12 +751,17 @@ export default function CalendarView({
               <div
                 key={idx}
                 className={cellClass}
+                id={isSel ? "tour-selected-cell" : undefined}
+                data-tour-has-events={dots.length > 0 ? "true" : undefined}
                 onClick={() => {
                   if (!d.isCurrentMonth) {
                     setYear(d.year);
                     setMonth(d.month);
                   }
                   setSelected(d.day);
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('speanut_tour_event', { detail: { type: 'day_selected', day: d.day } }));
+                  }
                 }}
                 role="button"
                 tabIndex={0}
@@ -765,8 +807,18 @@ export default function CalendarView({
           ) : error ? (
             <p className={styles.noEventsText} style={{ color: 'var(--red, #ff4d4f)' }}>Có lỗi xảy ra: {error}</p>
           ) : selectedDayEvents.length > 0 ? (
-            selectedDayEvents.map((ev: any) => (
-              <EventCard key={ev.id} ev={ev} onClick={() => toggleCancelSession(ev.class_id, ev.dateStr)} />
+            selectedDayEvents.map((ev: any, idx: number) => (
+              <EventCard 
+                key={ev.id} 
+                ev={ev} 
+                id={idx === 0 ? "tour-event-card" : undefined}
+                onClick={() => {
+                  toggleCancelSession(ev.class_id, ev.dateStr);
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('speanut_tour_event', { detail: { type: 'session_toggled', classId: ev.class_id, dateStr: ev.dateStr } }));
+                  }
+                }} 
+              />
             ))
           ) : (
             <p className={styles.noEventsText}>Không có lớp học nào vào ngày này.</p>
