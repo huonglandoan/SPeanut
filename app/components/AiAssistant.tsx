@@ -269,10 +269,14 @@ export default function AiAssistant({ isOpen, onClose }: AiAssistantProps) {
       setMessages(prev => [...prev, newMsg]);
       // CHAT MODE: KHÔNG gọi speakText để đọc to câu trả lời!
     } catch (err: any) {
+      // Chỉ hiện message thân thiện, không dump lỗi kỹ thuật
+      const errText = err.message || 'Trợ lý AI gặp sự cố. Vui lòng thử lại sau.';
+      // Bỏ prefix kỹ thuật nếu có (ví dụ: "Error: ...")
+      const cleanMsg = errText.replace(/^(Error|Lỗi):\s*/i, '').trim();
       setMessages(prev => [...prev, {
         id: String(Date.now() + 1),
         sender: 'assistant',
-        text: `Rất tiếc, tôi gặp lỗi: ${err.message}`,
+        text: `⚠️ ${cleanMsg}`,
         error: true
       }]);
     } finally {

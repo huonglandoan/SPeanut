@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 
 export const maxDuration = 60; // Cho phép tối đa 60 giây trên Vercel (Pro plan: 300s)
 import { getAuthenticatedUserId, createClient } from "@/lib/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { CalendarService } from "../../../services/calendar";
+
 
 // Helper function để tính toán trước tiền lương và số buổi học của năm 2026
 function calculateSalaryStats(year: number, schedules: any[], cancelledSessions: any, extraIncomes: any) {
@@ -297,56 +297,68 @@ CHÚ Ý: Chỉ trả về duy nhất chuỗi JSON hợp lệ, KHÔNG bao gồm m
     }
 
     let assistantMessage = "";
+    let geminiAttempted = false;
+    let geminiFailed = false;
 
-    // Ưu tiên sử dụng Google Gemini SDK nếu có cấu hình GEMINI_API_KEY
-    if (process.env.GEMINI_API_KEY) {
-      try {
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        
-        // Thử các model theo thứ tự ưu tiên (Gemini 2.5, 2.5 Lite, và 3.5 fallback) để tránh lỗi 404 hoặc 503
-        const modelsToTry = ["gemini-2.5-flash", "gemini-2.5-flash-lite-preview-06-17", "gemini-1.5-flash"];
-        let lastError = null;
-        
-        for (const modelName of modelsToTry) {
+    // Thu thập tất cả Gemini keys hợp lệ (hỗ trợ tối đa 3 keys để xoay vòng tránh 429)
+    const geminiKeys = [
+      process.env.GEMINI_API_KEY,
+      process.env.GEMINI_API_KEY_2,
+      process.env.GEMINI_API_KEY_3,
+    ].filter((k): k is string => !!k && k.length > 10);
+
+    if (geminiKeys.length > 0) {
+      geminiAttempted = true;
+      // Model ưu tiên: 1.5-flash ổn định hơn 2.5-flash, tránh 503
+      const modelsToTry = ["gemini-1.5-flash", "gemini-2.5-flash", "gemini-1.5-flash-8b"];
+      const prompt = `${systemPrompt}${contextPrompt}\n\nYêu cầu của người dùng:\n"${message}"`;
+
+      outer:
+      for (const modelName of modelsToTry) {
+        for (const apiKey of geminiKeys) {
           try {
-            console.log(`Đang thử gọi Google Gemini với model: ${modelName}`);
+            const { GoogleGenerativeAI } = await import("@google/generative-ai");
+            const genAI = new GoogleGenerativeAI(apiKey);
             const model = genAI.getGenerativeModel({
               model: modelName,
-              generationConfig: {
-                responseMimeType: "application/json",
-              },
+              generationConfig: { responseMimeType: "application/json" },
             });
-
-            const prompt = `${systemPrompt}${contextPrompt}\n\nYêu cầu của người dùng:\n"${message}"`;
+            console.log(`Thử model=${modelName} key=...${apiKey.slice(-6)}`);
             const result = await model.generateContent(prompt);
             assistantMessage = result.response.text();
-            
             if (assistantMessage) {
-              console.log(`Gọi thành công model: ${modelName}`);
-              break;
+              console.log(`✓ Thành công: model=${modelName}`);
+              break outer;
             }
-          } catch (modelErr: any) {
-            console.warn(`Thử model ${modelName} thất bại:`, modelErr.message || modelErr);
-            lastError = modelErr;
+          } catch (e: any) {
+            const msg = e.message || String(e);
+            console.warn(`✗ model=${modelName} key=...${apiKey.slice(-6)}:`, msg.slice(0, 80));
+            // 429: thử key tiếp theo
+            if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) continue;
+            // Lỗi khác: thử model tiếp theo
+            break;
           }
         }
-
-        if (!assistantMessage && lastError) {
-          throw lastError;
-        }
-      } catch (geminiError: any) {
-        console.error("Lỗi khi gọi Google Gemini API:", geminiError);
-        throw new Error(`Google Gemini API error: ${geminiError.message || geminiError}`);
       }
-    } else {
-      // Lấy 9Router URL và KEY từ env hoặc từ client header truyền lên làm fallback
+
+      if (!assistantMessage) {
+        console.warn("Tất cả Gemini keys/models thất bại, fallback sang 9Router");
+        geminiFailed = true;
+      }
+    }
+
+    // Nếu không có Gemini key hợp lệ, HOẶC Gemini thất bại → dùng 9Router
+    if (!assistantMessage) {
       const ninerouterUrl = process.env.NINEROUTER_URL || request.headers.get("x-ninerouter-url");
       const ninerouterKey = process.env.NINEROUTER_KEY || request.headers.get("x-ninerouter-key");
 
       if (!ninerouterUrl) {
+        // Không có cả 2 nguồn AI
         return NextResponse.json({
-          error: "GEMINI_API_KEY or NINEROUTER_URL is missing",
-          message: "Chưa cấu hình GEMINI_API_KEY trong file .env hoặc cấu hình 9Router URL."
+          error: "Chưa cấu hình AI",
+          message: geminiAttempted && geminiFailed
+            ? "Google AI không phản hồi và chưa cấu hình 9Router dự phòng. Vui lòng mở Cài đặt ⚙️ trong cửa sổ chat để nhập 9Router URL."
+            : "Chưa cấu hình GEMINI_API_KEY hoặc 9Router URL. Vui lòng mở Cài đặt ⚙️ trong cửa sổ chat để nhập thông tin kết nối."
         }, { status: 400 });
       }
 
@@ -358,27 +370,42 @@ CHÚ Ý: Chỉ trả về duy nhất chuỗi JSON hợp lệ, KHÔNG bao gồm m
         headers["Authorization"] = `Bearer ${ninerouterKey}`;
       }
 
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            { role: "system", content: systemPrompt + contextPrompt },
-            { role: "user", content: message }
-          ],
-          temperature: 0.1,
-          stream: false
-        })
-      });
+      try {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              { role: "system", content: systemPrompt + contextPrompt },
+              { role: "user", content: message }
+            ],
+            temperature: 0.1,
+            stream: false
+          })
+        });
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`9Router API returned error: ${res.status} ${errorText}`);
+        if (!res.ok) {
+          const errorText = await res.text();
+          const status = res.status;
+          if (status === 429) {
+            throw Object.assign(new Error("AI đang quá tải. Vui lòng thử lại sau vài giây."), { _friendly: true });
+          } else if (status === 401 || status === 403) {
+            throw Object.assign(new Error("9Router API Key không hợp lệ. Vui lòng kiểm tra cài đặt."), { _friendly: true });
+          }
+          throw Object.assign(new Error(`9Router không phản hồi (${status}). Thử lại sau nhé.`), { _friendly: true });
+        }
+
+        const responseData = await res.json();
+        assistantMessage = responseData.choices?.[0]?.message?.content || "";
+      } catch (routerErr: any) {
+        if (routerErr._friendly) throw routerErr;
+        const rErrMsg = routerErr.message || String(routerErr);
+        if (rErrMsg.includes('fetch failed') || rErrMsg.includes('ENOTFOUND') || rErrMsg.includes('ECONNREFUSED')) {
+          throw Object.assign(new Error("Không thể kết nối đến 9Router. Kiểm tra URL trong Cài đặt ⚙️ và kết nối mạng nhé."), { _friendly: true });
+        }
+        throw Object.assign(new Error("AI gặp sự cố kết nối. Thử lại sau nhé."), { _friendly: true });
       }
-
-      const responseData = await res.json();
-      assistantMessage = responseData.choices?.[0]?.message?.content || "";
     }
 
     // Làm sạch đầu ra đề phòng LLM tự ý thêm ```json ... ```
@@ -399,17 +426,23 @@ CHÚ Ý: Chỉ trả về duy nhất chuỗi JSON hợp lệ, KHÔNG bao gồm m
       }, { status: 500 });
     }
   } catch (error: any) {
-    if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
-      console.error(`[AI Connect Error] ${error.code}: Failed to reach API endpoint.`);
-    } else {
-      console.error("Lỗi POST /api/ai/parse-class:", error);
+    // Không log lỗi network thông thường để tránh noise
+    if (!error._friendly) {
+      console.error("Lỗi POST /api/ai/parse-class:", error.message || error);
     }
     
-    let friendlyMessage = error.message || "Có lỗi xảy ra khi xử lý yêu cầu.";
-    if (error.code === 'ENOTFOUND') {
-      friendlyMessage = "Không thể tìm thấy địa chỉ máy chủ API (Lỗi DNS ENOTFOUND). Vui lòng kiểm tra kết nối mạng.";
-    } else if (error.code === 'ECONNREFUSED') {
-      friendlyMessage = "Kết nối tới máy chủ bị từ chối (Lỗi ECONNREFUSED). Hãy chắc chắn rằng máy chủ đang hoạt động.";
+    let friendlyMessage: string;
+    if (error._friendly) {
+      // Lỗi đã được phân loại thân thiện từ bên trong
+      friendlyMessage = error.message;
+    } else if (error.code === 'ENOTFOUND' || (error.message || '').includes('ENOTFOUND')) {
+      friendlyMessage = "Không thể kết nối đến Google AI. Kiểm tra mạng và thử lại nhé.";
+    } else if (error.code === 'ECONNREFUSED' || (error.message || '').includes('ECONNREFUSED')) {
+      friendlyMessage = "Google AI không phản hồi. Vui lòng thử lại sau ít phút.";
+    } else if ((error.message || '').includes('fetch failed')) {
+      friendlyMessage = "Mất kết nối khi gọi Google AI. Kiểm tra mạng và thử lại nhé.";
+    } else {
+      friendlyMessage = "Trợ lý AI gặp sự cố. Vui lòng thử lại sau.";
     }
     
     return NextResponse.json({ error: "Lỗi kết nối", message: friendlyMessage }, { status: 500 });
