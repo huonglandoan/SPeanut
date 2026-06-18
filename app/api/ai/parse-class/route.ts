@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+
+export const maxDuration = 60; // Cho phép tối đa 60 giây trên Vercel (Pro plan: 300s)
 import { getAuthenticatedUserId, createClient } from "@/lib/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { CalendarService } from "../../../services/calendar";
@@ -297,12 +299,12 @@ CHÚ Ý: Chỉ trả về duy nhất chuỗi JSON hợp lệ, KHÔNG bao gồm m
     let assistantMessage = "";
 
     // Ưu tiên sử dụng Google Gemini SDK nếu có cấu hình GEMINI_API_KEY
-    if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== "your_gemini_api_key_here") {
+    if (process.env.GEMINI_API_KEY) {
       try {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         
         // Thử các model theo thứ tự ưu tiên (Gemini 2.5, 2.5 Lite, và 3.5 fallback) để tránh lỗi 404 hoặc 503
-        const modelsToTry = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash"];
+        const modelsToTry = ["gemini-2.5-flash", "gemini-2.5-flash-lite-preview-06-17", "gemini-1.5-flash"];
         let lastError = null;
         
         for (const modelName of modelsToTry) {
