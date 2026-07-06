@@ -40,9 +40,11 @@ export function GuideModal({ isOpen, onClose, setActiveNav }: GuideModalProps) {
       localStorage.setItem('speanut_tour_mode', 'true');
       localStorage.setItem('speanut_active_tour', 'true');
       localStorage.setItem('speanut_tour_step', '1');
-      if (setActiveNav) setActiveNav(1); // Mặc định chuyển sang Lịch dạy
+      if (setActiveNav) setActiveNav(1); // Chuyển sang Lịch dạy
       onClose();
-      window.location.reload(); // Reload để khởi động tour mode sạch sẽ
+      // Dùng dispatchEvent để kích hoạt tour ngay, không reload trang
+      // (tránh mất session Google của người dùng đã đăng nhập)
+      window.dispatchEvent(new CustomEvent('speanut_tour_start'));
     }
   };
 
@@ -286,17 +288,30 @@ export function InteractiveTour({ activeNav, setActiveNav }: { activeNav: number
       const step = parseInt(localStorage.getItem('speanut_tour_step') || '1', 10);
       setIsTourActive(activeTour);
       setTourStep(step);
-
-      // Check Mobile
-      const checkMobile = () => {
-        setIsMobile(window.innerWidth < 768);
-      };
-      checkMobile();
-      window.addEventListener('resize', checkMobile);
-      return () => window.removeEventListener('resize', checkMobile);
     }
-    return () => setMounted(false);
-  }, [activeNav]);
+  }, []);
+
+  // Lắng nghe sự kiện khởi động tour từ GuideModal (không cần reload trang)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleTourStart = () => {
+      setIsTourActive(true);
+      setTourStep(1);
+    };
+    window.addEventListener('speanut_tour_start', handleTourStart);
+    return () => window.removeEventListener('speanut_tour_start', handleTourStart);
+  }, []);
+
+  // Check Mobile riêng
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Thường xuyên cập nhật chiều cao thực tế của bong bóng để tính tọa độ chính xác
   useLayoutEffect(() => {
@@ -405,7 +420,9 @@ export function InteractiveTour({ activeNav, setActiveNav }: { activeNav: number
     localStorage.removeItem('speanut_tour_schedules');
     localStorage.removeItem('speanut_cancelled_sessions');
     alert("🎉 Chúc mừng bạn đã hoàn thành Tour hướng dẫn SPeanut!");
-    window.location.reload(); // Reload để phục hồi dữ liệu thật từ DB
+    // Phát sự kiện để các component tải lại dữ liệu thật từ DB
+    // mà không reload trang (giữ nguyên session Google)
+    window.dispatchEvent(new CustomEvent('speanut_tour_ended'));
   };
 
   const handleSkipTour = () => {
@@ -417,7 +434,8 @@ export function InteractiveTour({ activeNav, setActiveNav }: { activeNav: number
       localStorage.removeItem('speanut_tour_classes');
       localStorage.removeItem('speanut_tour_schedules');
       localStorage.removeItem('speanut_cancelled_sessions');
-      window.location.reload(); // Reload để phục hồi dữ liệu thật từ DB
+      // Phát sự kiện để các component tải lại dữ liệu thật từ DB
+      window.dispatchEvent(new CustomEvent('speanut_tour_ended'));
     }
   };
 

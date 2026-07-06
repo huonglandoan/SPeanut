@@ -4,6 +4,7 @@ import styles from '../styles/Calendar.module.css'
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SkeletonCard } from '../components/Loader';
 import { fetchProfile, updateProfile } from '../services/profile';
+import { supabase } from '@/lib/supabase';
 
 declare global {
   interface Window {
@@ -318,6 +319,7 @@ export default function CalendarView({
   };
 
   const handleGoogleSync = async () => {
+    // Chế độ chạy thử (Tour Mode): giả lập đồng bộ
     if (typeof window !== 'undefined' && localStorage.getItem('speanut_tour_mode') === 'true') {
       setSyncing(true);
       setSyncProgress('Đang kết nối API Google...');
@@ -334,7 +336,26 @@ export default function CalendarView({
       return;
     }
 
-    // 1. Thử đồng bộ tự động bằng token lưu trong cookie
+    // 1. Ưu tiên cao nhất: Lấy provider_token trực tiếp từ Supabase session của người dùng đã đăng nhập bằng Google
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.provider_token) {
+        setSyncing(true);
+        setSyncProgress('Đang đồng bộ qua tài khoản Google đã đăng nhập...');
+        try {
+          await startCalendarSync(session.provider_token);
+          return;
+        } catch (err: any) {
+          console.warn("Đồng bộ qua Supabase session provider_token thất bại:", err);
+          // Tiếp tục sang các phương thức fallback
+          setSyncing(false);
+        }
+      }
+    } catch (sessionErr) {
+      console.warn("Không thể lấy Supabase session:", sessionErr);
+    }
+
+    // 2. Fallback: Thử đồng bộ bằng token lưu trong cookie (từ lần đăng nhập Google trước)
     const providerToken = getCookie('google_provider_token');
     if (providerToken) {
       setSyncing(true);
@@ -344,10 +365,11 @@ export default function CalendarView({
         return;
       } catch (err: any) {
         console.warn("Đồng bộ qua token trong cookie thất bại, chuyển sang xác thực popup:", err);
+        setSyncing(false);
       }
     }
 
-    // 2. Fallback sang mở popup xác thực Google (GIS)
+    // 3. Fallback cuối: Mở popup xác thực Google (GIS) — dành cho tài khoản đăng nhập bằng email/password
     const clientId = (typeof window !== 'undefined' && localStorage.getItem('speanut_config_google_client_id')) || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     if (!clientId) {
       alert("Lỗi: Chưa cấu hình Google Client ID! Vui lòng truy cập trang /deploy để thiết lập thông số.");
@@ -393,7 +415,7 @@ export default function CalendarView({
         }
       });
 
-      client.requestAccessToken({ prompt: 'consent' });
+      client.requestAccessToken({ prompt: 'select_account' });
     } catch (err: any) {
       console.error(err);
       setSyncing(false);
@@ -432,6 +454,34 @@ export default function CalendarView({
         console.error(e);
       }
     }
+  }, []);
+
+  // Tải lại dữ liệu thật từ DB sau khi tour kết thúc (không reload trang)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleTourEnded = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/calendar');
+        if (res.ok) {
+          const data = await res.json();
+          setSchedules(data);
+        }
+        // Reset cancelled sessions từ profile thật
+        const profileData = await fetchProfile();
+        if (profileData?.cancelled_sessions && typeof profileData.cancelled_sessions === 'object') {
+          setCancelledSessions(profileData.cancelled_sessions);
+        } else {
+          setCancelledSessions({});
+        }
+      } catch (err) {
+        console.error('Lỗi tải lại dữ liệu sau tour:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    window.addEventListener('speanut_tour_ended', handleTourEnded);
+    return () => window.removeEventListener('speanut_tour_ended', handleTourEnded);
   }, []);
 
   const toggleCancelSession = async (classId: number, dateStr: string) => {

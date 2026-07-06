@@ -30,12 +30,13 @@ export async function GET(request: Request) {
       // Lưu Google provider tokens vào cookies nếu có
       if (data.session) {
         const cookieStore = await cookies();
+        const isProduction = process.env.NODE_ENV === 'production';
         if (data.session.provider_token) {
           cookieStore.set('google_provider_token', data.session.provider_token, {
             path: '/',
             maxAge: 3600, // 1 hour
             sameSite: 'lax',
-            secure: true,
+            secure: isProduction,
           });
         }
         if (data.session.provider_refresh_token) {
@@ -43,7 +44,7 @@ export async function GET(request: Request) {
             path: '/',
             maxAge: 30 * 24 * 3600, // 30 days
             sameSite: 'lax',
-            secure: true,
+            secure: isProduction,
           });
         }
       }
