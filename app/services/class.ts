@@ -64,9 +64,12 @@ export const ClassService = {
     if (classErr) throw classErr;
     if (!classesData || classesData.length === 0) return [];
 
+    const classIds = classesData.map((c: any) => c.id);
+
     const { data: schedulesData, error: scheduleErr } = await supabase
       .from('class_schedules')
-      .select('*');
+      .select('*')
+      .in('class_id', classIds);
 
     if (scheduleErr) throw scheduleErr;
 

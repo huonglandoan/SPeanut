@@ -8,10 +8,10 @@ import Scheduler from './class'
 import CalendarView from './calendar'
 import SalaryView from './salary'
 import ProfileView from './profile'
-import Image from 'next/image'
 import { PeanutLoader } from '../components/Loader'
 import { InteractiveTour, ClassTour } from '../components/Guide'
 import AiAssistant from '../components/AiAssistant'
+import { AppDataProvider, useAppData } from '../components/AppDataContext'
 
 import { BookOpen, Calendar, Wallet, User, Heart } from "lucide-react";
 
@@ -19,15 +19,18 @@ const NAV_ICONS = [BookOpen, Calendar, Wallet, User];
 const NAV_LABELS = ["Class", "Calendar", "Wallet", "Profile"];
 export const dynamic = 'force-dynamic';
 
-export default function DashboardPage() {
+// Inner component — có thể truy cập AppDataContext
+function DashboardContent() {
   const [year, setYear] = useState(() => new Date().getFullYear())
   const [month, setMonth] = useState(() => new Date().getMonth() + 1)
   const [selected, setSelected] = useState(() => new Date().getDate())
   const [activeNav, setActiveNav] = useState(1)
   const [isAiOpen, setIsAiOpen] = useState(false)
-  
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+
+  // Lấy hàm refresh từ context để kick-off fetch ngay sau khi auth xong
+  const { refreshSchedules, refreshProfile } = useAppData();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -41,7 +44,11 @@ export default function DashboardPage() {
         // Nếu là admin -> Chuyển hướng thẳng sang trang quản trị /admin
         router.push('/admin')
       } else {
-        setLoading(false)
+        setLoading(false);
+        // Prefetch data ngay sau khi xác nhận đăng nhập thành công
+        // Cả Calendar và Salary đều dùng chung data này, không cần fetch riêng
+        refreshSchedules();
+        refreshProfile();
       }
     }
 
@@ -57,7 +64,7 @@ export default function DashboardPage() {
     })
 
     return () => subscription.unsubscribe()
-  }, [router])
+  }, [router, refreshSchedules, refreshProfile])
 
   const handleToggleTheme = (mode: 'light' | 'dark') => {
     if (mode === 'dark') {
@@ -177,5 +184,13 @@ export default function DashboardPage() {
     <ClassTour activeNav={activeNav} />
     <AiAssistant isOpen={isAiOpen} onClose={() => setIsAiOpen(false)} />
    </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <AppDataProvider>
+      <DashboardContent />
+    </AppDataProvider>
   );
 }

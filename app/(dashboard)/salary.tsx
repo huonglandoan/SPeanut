@@ -5,8 +5,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Wallet, Calendar, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import styles from '../styles/Salary.module.css';
-import { fetchProfile, updateProfile } from '../services/profile';
+import { updateProfile } from '../services/profile';
 import { SkeletonCard } from '../components/Loader';
+import { useAppData } from '../components/AppDataContext';
 
 interface SalaryViewProps {
   activeNav: number;
@@ -22,9 +23,16 @@ const MONTHS = [
 ];
 
 export default function SalaryView({ activeNav, year, setYear, month, setMonth }: SalaryViewProps) {
-  const [schedules, setSchedules] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    schedules,
+    schedulesLoading: loading,
+    schedulesError: error,
+    refreshSchedules,
+    profile,
+    setProfile,
+    refreshProfile,
+  } = useAppData();
+
   const [cancelledSessions, setCancelledSessions] = useState<Record<string, boolean>>({});
 
   // Extra collection states
@@ -32,89 +40,47 @@ export default function SalaryView({ activeNav, year, setYear, month, setMonth }
   const [extraName, setExtraName] = useState('');
   const [extraAmount, setExtraAmount] = useState('');
 
-  // Profile state for database sync
-  const [profile, setProfile] = useState<any>(null);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
 
-  // Load profile when Wallet tab is selected
+  // Load audit logs khi tab Wallet được chọn (chỉ cần ở Salary, không cần share)
   useEffect(() => {
-    async function loadProfile() {
+    async function loadAuditLogs() {
+      if (!profile?.id) {
+        // Nếu profile chưa có, refresh và thử lại sau
+        refreshProfile();
+        return;
+      }
       try {
-        const data = await fetchProfile();
-        setProfile(data);
+        const fourteenDaysAgo = new Date();
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
 
-        // Tải nhật ký thay đổi của riêng gia sư trong vòng 14 ngày gần nhất
-        if (data && data.id) {
-          const fourteenDaysAgo = new Date();
-          fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+        const { data: logs, error: logsError } = await supabase
+          .from('admin_audit_logs')
+          .select('*')
+          .eq('target_user_id', profile.id)
+          .gte('created_at', fourteenDaysAgo.toISOString())
+          .order('created_at', { ascending: false });
 
-          const { data: logs, error: logsError } = await supabase
-            .from('admin_audit_logs')
-            .select('*')
-            .eq('target_user_id', data.id)
-            .gte('created_at', fourteenDaysAgo.toISOString())
-            .order('created_at', { ascending: false });
-            
-          if (logsError) {
-            console.error("Lỗi khi tải nhật ký hoạt động của gia sư:", logsError);
-          } else {
-            setAuditLogs(logs || []);
-          }
+        if (logsError) {
+          console.error("Lỗi khi tải nhật ký hoạt động của gia sư:", logsError);
+        } else {
+          setAuditLogs(logs || []);
         }
       } catch (err) {
-        console.error("Lỗi khi tải thông tin cá nhân:", err);
+        console.error("Lỗi khi tải audit logs:", err);
       }
     }
     if (activeNav === 2) {
-      loadProfile();
+      loadAuditLogs();
     }
-  }, [activeNav]);
+  }, [activeNav, profile?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const syncExtraIncomesToDB = async (list: any[], targetYear: number, targetMonth: number, currentProfile: any) => {
-    if (!currentProfile) return;
-    try {
-      const dbKey = `${targetYear}_${targetMonth}`;
-      const updatedExtraIncomes = {
-        ...(currentProfile.extra_incomes || {}),
-        [dbKey]: list
-      };
-      const updatedProfile = await updateProfile({
-        extra_incomes: updatedExtraIncomes
-      });
-      setProfile(updatedProfile);
-    } catch (err) {
-      console.error("Lỗi khi đồng bộ extra incomes lên DB:", err);
-    }
-  };
-
-  // 1. Fetch dữ liệu lịch dạy từ API khi tab Wallet được chọn
+  // Trigger refresh schedules nếu chưa có data
   useEffect(() => {
-    let active = true;
-    async function fetchCalendarData() {
-      try {
-        setLoading(true);
-        const res = await fetch('/api/calendar');
-        if (!res.ok) throw new Error("Lỗi khi tải lịch học");
-        const data = await res.json();
-        if (active) {
-          setSchedules(data);
-          setError(null);
-        }
-      } catch (err: any) {
-        if (active) setError(err.message || "Không thể tải dữ liệu.");
-      } finally {
-        if (active) setLoading(false);
-      }
+    if (activeNav === 2 && schedules.length === 0 && !loading) {
+      refreshSchedules();
     }
-
-    if (activeNav === 2) {
-      fetchCalendarData();
-    }
-
-    return () => {
-      active = false;
-    };
-  }, [activeNav]);
+  }, [activeNav]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 2. Đồng bộ trạng thái buổi nghỉ và các khoản thu thêm từ localStorage/DB bất cứ khi nào tab Wallet được mở hoặc chuyển tháng
   useEffect(() => {
@@ -168,6 +134,23 @@ export default function SalaryView({ activeNav, year, setYear, month, setMonth }
       }
     }
   }, [activeNav, year, month, profile]);
+
+  const syncExtraIncomesToDB = async (list: any[], targetYear: number, targetMonth: number, currentProfile: any) => {
+    if (!currentProfile) return;
+    try {
+      const dbKey = `${targetYear}_${targetMonth}`;
+      const updatedExtraIncomes = {
+        ...(currentProfile.extra_incomes || {}),
+        [dbKey]: list
+      };
+      const updatedProfile = await updateProfile({
+        extra_incomes: updatedExtraIncomes
+      });
+      setProfile(updatedProfile);
+    } catch (err) {
+      console.error("Lỗi khi đồng bộ extra incomes lên DB:", err);
+    }
+  };
 
   const handleAddExtraIncome = async (e: React.FormEvent) => {
     e.preventDefault();

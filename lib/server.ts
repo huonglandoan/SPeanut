@@ -85,7 +85,5 @@ export async function getAuthenticatedUserId() {
   const { data: { user } } = await supabaseServer.auth.getUser();
   if (!user) return null;
 
-  await ensureUserProfileExists(supabaseServer, user);
-
   return user.id;
 }

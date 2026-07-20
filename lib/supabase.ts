@@ -22,14 +22,30 @@ function isValidSupabaseConfig(url: string | null, key: string | null): boolean 
   );
 }
 
+// Cache cho custom client — chỉ tạo mới khi URL hoặc key thay đổi
+let _cachedCustomClient: ReturnType<typeof createBrowserClient> | null = null;
+let _cachedCustomUrl: string | null = null;
+let _cachedCustomKey: string | null = null;
+
 // Hàm lấy client đang hoạt động (tùy biến từ localStorage hoặc mặc định)
 const getActiveClient = () => {
   if (typeof window !== 'undefined') {
     const customUrl = localStorage.getItem('speanut_config_supabase_url');
     const customAnonKey = localStorage.getItem('speanut_config_supabase_anon_key');
     if (isValidSupabaseConfig(customUrl, customAnonKey)) {
+      // Tái sử dụng client cũ nếu URL và key không đổi
+      if (
+        _cachedCustomClient &&
+        _cachedCustomUrl === customUrl &&
+        _cachedCustomKey === customAnonKey
+      ) {
+        return _cachedCustomClient;
+      }
       try {
-        return createBrowserClient(customUrl!.trim(), customAnonKey!.trim());
+        _cachedCustomClient = createBrowserClient(customUrl!.trim(), customAnonKey!.trim());
+        _cachedCustomUrl = customUrl;
+        _cachedCustomKey = customAnonKey;
+        return _cachedCustomClient;
       } catch (e) {
         console.error("Lỗi khởi tạo custom Supabase client:", e);
       }

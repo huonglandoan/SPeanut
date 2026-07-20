@@ -3,8 +3,9 @@ import { createPortal } from 'react-dom'
 import styles from '../styles/Calendar.module.css'
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SkeletonCard } from '../components/Loader';
-import { fetchProfile, updateProfile } from '../services/profile';
+import { updateProfile } from '../services/profile';
 import { supabase } from '@/lib/supabase';
+import { useAppData } from '../components/AppDataContext';
 
 declare global {
   interface Window {
@@ -141,9 +142,16 @@ export default function CalendarView({
   setSelected,
   activeNav
 }: any) {
-  const [schedules, setSchedules] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    schedules,
+    schedulesLoading: loading,
+    schedulesError: error,
+    refreshSchedules,
+    profile,
+    setProfile,
+    refreshProfile,
+  } = useAppData();
+
   const [cancelledSessions, setCancelledSessions] = useState<Record<string, boolean>>({});
 
   // States for Google Calendar Sync
@@ -423,27 +431,17 @@ export default function CalendarView({
     }
   };
 
-  const [profile, setProfile] = useState<any | null>(null);
-
+  // Sync cancelled_sessions từ profile khi mở tab Calendar
   useEffect(() => {
-    async function loadProfile() {
-      try {
-        const data = await fetchProfile();
-        if (data && data.id) {
-          setProfile(data);
-          if (data.cancelled_sessions && typeof data.cancelled_sessions === 'object') {
-            setCancelledSessions(data.cancelled_sessions);
-            localStorage.setItem('speanut_cancelled_sessions', JSON.stringify(data.cancelled_sessions));
-          }
-        }
-      } catch (err) {
-        console.error("Lỗi khi tải thông tin cá nhân trong Lịch dạy:", err);
+    if (activeNav === 1) {
+      if (!profile) {
+        refreshProfile();
+      } else if (profile.cancelled_sessions && typeof profile.cancelled_sessions === 'object') {
+        setCancelledSessions(profile.cancelled_sessions);
+        localStorage.setItem('speanut_cancelled_sessions', JSON.stringify(profile.cancelled_sessions));
       }
     }
-    if (activeNav === 1) {
-      loadProfile();
-    }
-  }, [activeNav]);
+  }, [activeNav, profile, refreshProfile]);
 
   useEffect(() => {
     const stored = localStorage.getItem('speanut_cancelled_sessions');
@@ -461,28 +459,15 @@ export default function CalendarView({
     if (typeof window === 'undefined') return;
     const handleTourEnded = async () => {
       try {
-        setLoading(true);
-        const res = await fetch('/api/calendar');
-        if (res.ok) {
-          const data = await res.json();
-          setSchedules(data);
-        }
-        // Reset cancelled sessions từ profile thật
-        const profileData = await fetchProfile();
-        if (profileData?.cancelled_sessions && typeof profileData.cancelled_sessions === 'object') {
-          setCancelledSessions(profileData.cancelled_sessions);
-        } else {
-          setCancelledSessions({});
-        }
+        await refreshSchedules();
+        await refreshProfile();
       } catch (err) {
         console.error('Lỗi tải lại dữ liệu sau tour:', err);
-      } finally {
-        setLoading(false);
       }
     };
     window.addEventListener('speanut_tour_ended', handleTourEnded);
     return () => window.removeEventListener('speanut_tour_ended', handleTourEnded);
-  }, []);
+  }, [refreshSchedules, refreshProfile]);
 
   const toggleCancelSession = async (classId: number, dateStr: string) => {
     const key = `${classId}_${dateStr}`;
@@ -508,49 +493,13 @@ export default function CalendarView({
     }
   };
 
+  // Trigger refresh khi lần đầu vào tab Calendar (nếu data chưa có)
   useEffect(() => {
-    let active = true;
-    async function fetchCalendar() {
-      try {
-        setLoading(true);
-        if (typeof window !== 'undefined' && localStorage.getItem('speanut_tour_mode') === 'true') {
-          const stored = localStorage.getItem('speanut_tour_schedules');
-          if (stored) {
-            setSchedules(JSON.parse(stored));
-          } else {
-            const defaultSchedules = [
-              { id: 9001, class_id: 9001, name: "Toán 7", short_name: "T7", rate_per_session: 150000, type: "FIXED", day_of_week: 1, start_time: "18:00", end_time: "20:00", valid_from: "2026-01-01", valid_to: null },
-              { id: 9002, class_id: 9002, name: "Anh 8", short_name: "A8", rate_per_session: 180000, type: "FIXED", day_of_week: 2, start_time: "19:30", end_time: "21:30", valid_from: "2026-01-01", valid_to: null },
-              { id: 9003, class_id: 9003, name: "Lý 11", short_name: "L11", rate_per_session: 200000, type: "FIXED", day_of_week: 4, start_time: "17:00", end_time: "19:00", valid_from: "2026-01-01", valid_to: null },
-            ];
-            setSchedules(defaultSchedules);
-            localStorage.setItem('speanut_tour_schedules', JSON.stringify(defaultSchedules));
-          }
-          setLoading(false);
-          return;
-        }
-        const res = await fetch('/api/calendar');
-        if (!res.ok) throw new Error("Lỗi khi tải dữ liệu lịch biểu");
-        const data = await res.json();
-        if (active) {
-          setSchedules(data);
-          setError(null);
-        }
-      } catch (err: any) {
-        if (active) setError(err.message);
-      } finally {
-        if (active) setLoading(false);
-      }
+    if (activeNav === 1 && schedules.length === 0 && !loading) {
+      refreshSchedules();
     }
+  }, [activeNav]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    if (activeNav === 1) {
-      fetchCalendar();
-    }
-
-    return () => {
-      active = false;
-    };
-  }, [activeNav]);
 
   const days = buildCalendar(year, month);
 
