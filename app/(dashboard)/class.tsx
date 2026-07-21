@@ -3,8 +3,10 @@ import React, { useState, useEffect } from 'react';
 import styles from '../styles/Class.module.css';
 import { GroupedClassDisplay } from '../services/class' 
 import { Trash2, SquarePen, Settings, Repeat } from 'lucide-react';
+import { useAppData } from '../components/AppDataContext';
 
 export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
+  const { refreshSchedules } = useAppData();
   // --- CHUYỂN TAB TRÊN DI ĐỘNG ---
   const [activeTab, setActiveTab] = useState<'LIST' | 'CREATE'>('LIST');
 
@@ -195,7 +197,9 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
       if (!res.ok) throw new Error(data.error || "Không thể lặp lại lớp học.");
       
       setSuccess(data.message || "Đã lặp lại lịch dạy sang tháng sau thành công!");
-      fetchClasses();
+      // Reload cả danh sách lớp lẫn schedules trong AppDataContext
+      // để Calendar hiển thị ngay lịch vừa nhân bản mà không cần reload trang
+      await Promise.all([fetchClasses(), refreshSchedules()]);
     } catch (err: any) {
       setError(err.message);
     } finally {
