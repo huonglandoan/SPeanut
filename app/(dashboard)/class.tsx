@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from '../styles/Class.module.css';
 import { GroupedClassDisplay } from '../services/class' 
 import { Trash2, SquarePen, Settings, Repeat } from 'lucide-react';
@@ -44,7 +44,11 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
 
   const daysOfWeekLabels = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
-  const fetchClasses = async () => {
+  // Cache để tránh fetch lại mỗi lần switch tab
+  const classCacheLoadedRef = useRef(false);
+
+  const fetchClasses = async (force = false) => {
+    if (!force && classCacheLoadedRef.current) return; // Đã có cache, bỏ qua
     try {
       if (typeof window !== 'undefined' && localStorage.getItem('speanut_tour_mode') === 'true') {
         const storedClasses = localStorage.getItem('speanut_tour_classes');
@@ -59,12 +63,14 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
           setClasses(defaultClasses);
           localStorage.setItem('speanut_tour_classes', JSON.stringify(defaultClasses));
         }
+        classCacheLoadedRef.current = true;
         return;
       }
       const res = await fetch('/api/class');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Lỗi tải danh sách.");
       setClasses(data);
+      classCacheLoadedRef.current = true;
     } catch (err: any) {
       setError(err.message);
     }
@@ -159,7 +165,7 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
 
       setSuccess("Cập nhật lớp học thành công!");
       setChangingScheduleClassId(null);
-      fetchClasses();
+      fetchClasses(true); // invalidate cache sau khi sửa
     } catch (err: any) {
       setError(err.message || "Có lỗi xảy ra khi cập nhật lớp.");
     } finally { setLoading(false); }
@@ -199,7 +205,7 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
       setSuccess(data.message || "Đã lặp lại lịch dạy sang tháng sau thành công!");
       // Reload cả danh sách lớp lẫn schedules trong AppDataContext
       // để Calendar hiển thị ngay lịch vừa nhân bản mà không cần reload trang
-      await Promise.all([fetchClasses(), refreshSchedules()]);
+      await Promise.all([fetchClasses(true), refreshSchedules()]);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -217,7 +223,7 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
       if (!res.ok) throw new Error(data.error);
 
       setSuccess("Xóa lớp thành công!");
-      fetchClasses();
+      fetchClasses(true); // invalidate cache sau khi xóa
     } catch (err: any) { 
       setError(err.message); 
     } finally { setLoading(false); }
@@ -311,7 +317,7 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
 
       setSuccess("Tạo lớp thành công!");
       setName(''); setShort_Name(''); setRate_Per_Session(''); setSelectedDays([]);
-      fetchClasses();
+      fetchClasses(true); // invalidate cache sau khi tạo mới
       setActiveTab('LIST');
     } catch (err: any) { 
       setError(err.message); 

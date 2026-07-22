@@ -52,8 +52,8 @@ export const ClassService = {
   /**
    * 1. Lấy danh sách toàn bộ lớp học của ĐÚNG user đang đăng nhập
    */
-  async fetchClasses(userId: string): Promise<GroupedClassDisplay[]> {
-    const supabase = await createClient(); 
+  async fetchClasses(userId: string, existingClient?: any): Promise<GroupedClassDisplay[]> {
+    const supabase = existingClient ?? await createClient();
 
     const { data: classesData, error: classErr } = await supabase
       .from('classes')

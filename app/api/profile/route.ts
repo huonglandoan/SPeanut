@@ -17,63 +17,40 @@ export async function GET() {
       );
     }
 
-    // Đảm bảo profile người dùng đã tồn tại trong public.users trước khi truy vấn
-    await ensureUserProfileExists(supabaseServer, session.user);
-
-    // Lấy đầy đủ các cột thông tin người dùng bao gồm avatar, qr_code, các trường ngân hàng, extra_incomes và cancelled_sessions.
     const selectStr = 'id, email, full_name, avatar, bank_brand, bank_number, bank_owner, qr_code, extra_incomes, cancelled_sessions';
-    try {
-      const { data, error } = await supabaseServer
+    const { data, error } = await supabaseServer
+      .from('users')
+      .select(selectStr)
+      .eq('id', session.user.id)
+      .maybeSingle();
+
+    // Nếu chưa có profile thì tạo luôn (chỉ 1 extra query khi lần đầu tiên)
+    if (!data && !error) {
+      const fullName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User';
+      const { data: inserted, error: insertError } = await supabaseServer
         .from('users')
+        .insert({ id: session.user.id, email: session.user.email, full_name: fullName })
         .select(selectStr)
-        .eq('id', session.user.id)
         .single();
 
-      if (error) {
-        // Dự phòng nếu lỗi query do cấu trúc database chưa được migrate hoàn chỉnh
-        console.error('Lỗi truy vấn profile (fallback to session):', error);
-        return NextResponse.json({ 
-          id: session.user.id, 
-          email: session.user.email, 
-          full_name: '',
-          avatar: '',
-          bank_brand: '',
-          bank_number: '',
-          bank_owner: '',
-          qr_code: '',
-          extra_incomes: {}
-        }, { status: 200 });
+      if (insertError) {
+        console.error('[auth-sync] Lỗi tạo profile:', insertError);
       }
-
-      if (!data) {
-        return NextResponse.json({ 
-          id: session.user.id, 
-          email: session.user.email, 
-          full_name: '',
-          avatar: '',
-          bank_brand: '',
-          bank_number: '',
-          bank_owner: '',
-          qr_code: '',
-          extra_incomes: {}
-        }, { status: 200 });
-      }
-
-      return NextResponse.json(data, { status: 200 });
-    } catch (err) {
-      console.error('Unexpected error fetching profile, returning session fallback:', err);
-      return NextResponse.json({ 
-        id: session.user.id, 
-        email: session.user.email, 
-        full_name: '',
-        avatar: '',
-        bank_brand: '',
-        bank_number: '',
-        bank_owner: '',
-        qr_code: '',
-        extra_incomes: {}
+      return NextResponse.json(inserted ?? {
+        id: session.user.id, email: session.user.email, full_name: fullName,
+        avatar: '', bank_brand: '', bank_number: '', bank_owner: '', qr_code: '', extra_incomes: {}
       }, { status: 200 });
     }
+
+    if (error) {
+      console.error('Lỗi truy vấn profile:', error);
+      return NextResponse.json({
+        id: session.user.id, email: session.user.email, full_name: '',
+        avatar: '', bank_brand: '', bank_number: '', bank_owner: '', qr_code: '', extra_incomes: {}
+      }, { status: 200 });
+    }
+
+    return NextResponse.json(data, { status: 200 });
   } catch (err: any) {
     console.error('Lỗi hệ thống tại API GET /api/profile:', err);
     return NextResponse.json(

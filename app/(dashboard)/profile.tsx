@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { fetchProfile, updateProfile } from '../services/profile'
 import profileStyles from '../styles/Profile.module.css'
@@ -52,8 +52,14 @@ export default function ProfileView({ activeNav, setActiveNav }: ProfileViewProp
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
+  // Cache để tránh fetch lại mỗi lần switch tab
+  const profileCacheRef = useRef<{ loaded: boolean; data: ReturnType<typeof fetchProfile> | null }>({ loaded: false, data: null });
+
   useEffect(() => {
     const loadProfileData = async () => {
+      // Nếu đã có cache thì không fetch lại
+      if (profileCacheRef.current.loaded) return;
+
       setProfileLoading(true);
       try {
         const data = await fetchProfile();
@@ -64,18 +70,11 @@ export default function ProfileView({ activeNav, setActiveNav }: ProfileViewProp
         setBankNumber(data.bank_number || '');
         setBankOwner(data.bank_owner || '');
         setQrCode(data.qr_code || '/default_qr.png');
-        
-        const { data: { session } } = await supabase.auth.getSession();
-        setCanEdit(!!session);
+        // Nếu server trả về email → user đã đăng nhập, không cần gọi getSession() thêm
+        setCanEdit(!!data.email);
+        profileCacheRef.current.loaded = true;
       } catch (e) {
         console.error("Lỗi tải thông tin cá nhân từ server:", e);
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user?.email) {
-            setEmail(session.user.email);
-            setCanEdit(true);
-          }
-        } catch (_) {}
       } finally {
         setProfileLoading(false);
       }

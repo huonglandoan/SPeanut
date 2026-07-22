@@ -4,13 +4,16 @@ import { createClient, getAuthenticatedUserId } from "@/lib/server";
 
 export async function GET() {
     try {
-        const userId = await getAuthenticatedUserId();
-        if (!userId) {
+        const supabase = await createClient();
+        // Dùng getSession() thay vì getUser() để tránh round-trip đến Supabase Auth server
+        // getSession() đọc JWT từ cookie cục bộ → nhanh hơn nhiều
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
             return NextResponse.json({ error: 'Phiên đăng nhập hết hạn hoặc chưa đăng nhập.' }, { status: 401 });
         }
 
         // Truyền userId vào service để chỉ lấy đúng các lớp của giảng viên này
-        const classes = await ClassService.fetchClasses(userId);
+        const classes = await ClassService.fetchClasses(session.user.id, supabase);
         return NextResponse.json(classes, { status: 200 });
     } catch (error: any) {
         console.error("Lỗi GET /api/class:", error);
