@@ -378,7 +378,7 @@ export default function CalendarView({
     }
 
     // 3. Fallback cuối: Mở popup xác thực Google (GIS) — dành cho tài khoản đăng nhập bằng email/password
-    const clientId = (typeof window !== 'undefined' && localStorage.getItem('speanut_config_google_client_id')) || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const clientId = (typeof window !== 'undefined' && localStorage.getItem('speanut_config_google_client_id')) || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '1028929742910-1h498ngd9ur5b5md7j9qv1a4scm41q19.apps.googleusercontent.com';
     if (!clientId) {
       alert("Lỗi: Chưa cấu hình Google Client ID! Vui lòng truy cập trang /deploy để thiết lập thông số.");
       return;
