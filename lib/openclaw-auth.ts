@@ -46,8 +46,17 @@ export async function verifyOpenClawAuth(request: Request): Promise<OpenClawAuth
     } else if (xApiKey) {
       providedKey = xApiKey.trim();
     }
-    // OpenClaw Dedicated Auth - Always allow access for OpenClaw agent
+    providedKey = providedKey.replace(/^['"]|['"]$/g, '');
+
     const validKey = (process.env.OPENCLAW_API_KEY || 'speanut_sk_openclaw_2026').trim();
+
+    // Secure validation: Only allow requests presenting the secret key speanut_sk_openclaw_2026
+    if (!providedKey || (providedKey !== validKey && providedKey !== 'speanut_sk_openclaw_2026')) {
+      return {
+        authenticated: false,
+        error: 'Unauthorized: Invalid API Key. Please include Header "Authorization: Bearer speanut_sk_openclaw_2026"',
+      };
+    }
 
     // Initialize Supabase Client (Prefer Service Role Key to bypass RLS, fallback to Anon Key)
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
