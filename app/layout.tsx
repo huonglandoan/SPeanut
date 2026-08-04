@@ -15,9 +15,53 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://s-peanut.vercel.app'),
-  title: 'SPeanut',
-  description: 'Hệ thống quản lý thù lao và lịch làm việc thông minh dành cho trợ giảng SPeanut.',
-  keywords: ['SPeanut', 'quản lý lương', 'trợ giảng', 'lịch làm việc', 'bảng lương', 'tính lương trợ giảng'],
+  title: 'SPeanut - Hệ Thống Quản Lý Lương & Lịch Làm Trợ Giảng',
+  description: 'Hệ thống phần mềm quản lý thù lao, tính lương và lịch làm việc thông minh dành cho trợ giảng SPeanut.',
+  keywords: [
+    // Thương hiệu & các cách gõ
+    'SPeanut',
+    'speanut',
+    's peanut',
+    's-peanut',
+    'speanut app',
+    'speanut vercel',
+    // Trợ giảng & Quản lý
+    'trợ giảng',
+    'tro giang',
+    'quản lý trợ giảng',
+    'quan ly tro giang',
+    'app trợ giảng',
+    'trợ giảng tiếng anh',
+    // Lương & Thù lao
+    'quản lý lương',
+    'quan ly luong',
+    'tính lương trợ giảng',
+    'tinh luong tro giang',
+    'bảng lương trợ giảng',
+    'bang luong tro giang',
+    'tính thù lao',
+    'quản lý thù lao',
+    'tính lương ca dạy',
+    'tính lương theo giờ',
+    // Lịch làm & Điểm danh
+    'lịch làm việc',
+    'lich lam viec',
+    'quản lý lịch dạy',
+    'quan ly lich day',
+    'lịch trợ giảng',
+    'xếp lịch dạy',
+    'điểm danh trợ giảng',
+    // Phần mềm & Công cụ
+    'phần mềm quản lý trợ giảng',
+    'công cụ tính lương trợ giảng',
+    'hệ thống quản lý trợ giảng',
+  ],
+  alternates: {
+    canonical: 'https://s-peanut.vercel.app',
+  },
+  verification: {
+    google: 'iKSo11LSHwVvfo3_xI0-jJ3b9uF1Lwl-Y9S1hX0Doks',
+  },
   manifest: '/manifest.json',
   icons: {
     // Favicon trên tab browser → giữ peanut.png cũ
@@ -65,6 +109,8 @@ export default function RootLayout({
   return (
     <html lang="vi" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
+        {/* Google Search Console Verification */}
+        <meta name="google-site-verification" content="iKSo11LSHwVvfo3_xI0-jJ3b9uF1Lwl-Y9S1hX0Doks" />
         {/* ===== Favicon - Tab browser: giữ peanut.png cũ ===== */}
         <link rel="icon" type="image/png" href="/peanut.png" />
         <link rel="shortcut icon" href="/peanut.png" />
@@ -97,6 +143,42 @@ export default function RootLayout({
         <meta name="twitter:title" content="SPeanut" />
         <meta name="twitter:description" content="Hệ thống quản lý thù lao và lịch làm việc thông minh dành cho trợ giảng SPeanut." />
         <meta name="twitter:image" content="https://s-peanut.vercel.app/og-image.png" />
+
+        {/* Structured Data (Schema.org JSON-LD) cho Google hiểu ứng dụng */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@graph': [
+                {
+                  '@type': 'WebSite',
+                  '@id': 'https://s-peanut.vercel.app/#website',
+                  url: 'https://s-peanut.vercel.app',
+                  name: 'SPeanut',
+                  alternateName: ['speanut', 's peanut', 's-peanut', 'SPeanut App'],
+                  description: 'Hệ thống quản lý thù lao và lịch làm việc thông minh dành cho trợ giảng SPeanut.',
+                  inLanguage: 'vi-VN',
+                },
+                {
+                  '@type': 'SoftwareApplication',
+                  '@id': 'https://s-peanut.vercel.app/#application',
+                  name: 'SPeanut',
+                  alternateName: 'SPeanut - Quản lý lương & lịch làm trợ giảng',
+                  operatingSystem: 'All',
+                  applicationCategory: 'BusinessApplication',
+                  url: 'https://s-peanut.vercel.app',
+                  description: 'Phần mềm và ứng dụng quản lý lương, thù lao, lịch dạy và ca làm cho trợ giảng SPeanut.',
+                  offers: {
+                    '@type': 'Offer',
+                    price: '0',
+                    priceCurrency: 'VND',
+                  },
+                },
+              ],
+            }),
+          }}
+        />
 
         <script
           dangerouslySetInnerHTML={{

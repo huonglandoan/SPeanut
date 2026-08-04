@@ -4,8 +4,34 @@ export const maxDuration = 60; // Cho phép tối đa 60 giây trên Vercel (Pro
 import { getAuthenticatedUserId, createClient } from "@/lib/server";
 import { CalendarService } from "../../../services/calendar";
 
+// ===== SMART GEMINI KEY ROTATOR & COOLDOWN SYSTEM =====
+let globalKeyIndex = 0;
+const keyCooldownMap = new Map<string, number>();
 
-// Helper function để tính toán trước tiền lương và số buổi học của năm 2026
+function getRotatedGeminiKeys(rawKeys: string[]): string[] {
+  const now = Date.now();
+  // Lọc lấy các key không nằm trong thời gian cooldown
+  const availableKeys = rawKeys.filter(k => (keyCooldownMap.get(k) || 0) <= now);
+  
+  // Nếu tất cả key đều bị cooldown, fallback sử dụng lại toàn bộ rawKeys
+  const pool = availableKeys.length > 0 ? availableKeys : rawKeys;
+
+  const rotated: string[] = [];
+  const start = globalKeyIndex % pool.length;
+  for (let i = 0; i < pool.length; i++) {
+    rotated.push(pool[(start + i) % pool.length]);
+  }
+
+  // Tăng index xoay vòng cho lượt tiếp theo
+  globalKeyIndex = (globalKeyIndex + 1) % pool.length;
+  return rotated;
+}
+
+function markKeyCooldown(apiKey: string, durationMs: number = 60000) {
+  console.warn(`[Gemini Rotator] Key ...${apiKey.slice(-6)} dính Rate Limit (429). Tạm khóa trong ${durationMs / 1000}s.`);
+  keyCooldownMap.set(apiKey, Date.now() + durationMs);
+}
+
 function calculateSalaryStats(year: number, schedules: any[], cancelledSessions: any, extraIncomes: any) {
   const statsByMonth: Record<number, any> = {};
 
@@ -300,22 +326,25 @@ CHÚ Ý: Chỉ trả về duy nhất chuỗi JSON hợp lệ, KHÔNG bao gồm m
     let geminiAttempted = false;
     let geminiFailed = false;
 
-    // Thu thập tất cả Gemini keys hợp lệ (hỗ trợ tối đa 3 keys để xoay vòng tránh 429)
-    const geminiKeys = [
+    // Thu thập tất cả Gemini keys hợp lệ
+    const rawGeminiKeys = [
       process.env.GEMINI_API_KEY,
       process.env.GEMINI_API_KEY_2,
       process.env.GEMINI_API_KEY_3,
     ].filter((k): k is string => !!k && k.length > 10);
 
-    if (geminiKeys.length > 0) {
+    if (rawGeminiKeys.length > 0) {
       geminiAttempted = true;
-      // Model ưu tiên: 1.5-flash ổn định hơn 2.5-flash, tránh 503
-      const modelsToTry = ["gemini-1.5-flash", "gemini-2.5-flash", "gemini-1.5-flash-8b"];
+      // Danh sách model chuẩn mới nhất của Google (ưu tiên gemini-2.0-flash)
+      const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b"];
       const prompt = `${systemPrompt}${contextPrompt}\n\nYêu cầu của người dùng:\n"${message}"`;
+
+      // Lấy danh sách keys đã xoay vòng Round-Robin & lọc bỏ các key đang dính Cooldown (429)
+      const candidateKeys = getRotatedGeminiKeys(rawGeminiKeys);
 
       outer:
       for (const modelName of modelsToTry) {
-        for (const apiKey of geminiKeys) {
+        for (const apiKey of candidateKeys) {
           try {
             const { GoogleGenerativeAI } = await import("@google/generative-ai");
             const genAI = new GoogleGenerativeAI(apiKey);
@@ -323,19 +352,24 @@ CHÚ Ý: Chỉ trả về duy nhất chuỗi JSON hợp lệ, KHÔNG bao gồm m
               model: modelName,
               generationConfig: { responseMimeType: "application/json" },
             });
-            console.log(`Thử model=${modelName} key=...${apiKey.slice(-6)}`);
+            console.log(`[Gemini Rotator] Thử model=${modelName} key=...${apiKey.slice(-6)}`);
             const result = await model.generateContent(prompt);
             assistantMessage = result.response.text();
             if (assistantMessage) {
-              console.log(`✓ Thành công: model=${modelName}`);
+              console.log(`✓ Thành công: model=${modelName} key=...${apiKey.slice(-6)}`);
               break outer;
             }
           } catch (e: any) {
             const msg = e.message || String(e);
             console.warn(`✗ model=${modelName} key=...${apiKey.slice(-6)}:`, msg.slice(0, 80));
-            // 429: thử key tiếp theo
-            if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) continue;
-            // Lỗi khác: thử model tiếp theo
+
+            // Nếu gặp lỗi 429 / Rate Limit -> Tạm khóa key này trong 60 giây và thử ngay key sạch tiếp theo!
+            if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('Quota exceeded')) {
+              markKeyCooldown(apiKey, 60000);
+              continue;
+            }
+
+            // Nếu là lỗi khác (ví dụ model không hỗ trợ), chuyển sang thử model tiếp theo
             break;
           }
         }
@@ -375,8 +409,9 @@ CHÚ Ý: Chỉ trả về duy nhất chuỗi JSON hợp lệ, KHÔNG bao gồm m
           method: "POST",
           headers,
           body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
+            model: "google/gemini-2.0-flash",
             messages: [
+
               { role: "system", content: systemPrompt + contextPrompt },
               { role: "user", content: message }
             ],
