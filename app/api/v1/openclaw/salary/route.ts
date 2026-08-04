@@ -41,20 +41,34 @@ export async function GET(request: Request) {
     const classMap = new Map((classes || []).map((c: any) => [c.id, c]));
     const classIds = (classes || []).map((c: any) => c.id);
 
-    // 2. Fetch teaching logs for month / date range
-    let monthLogs: any[] = [];
+    // 2. Fetch class schedules & teaching logs
+    let schedules: any[] = [];
+    let logs: any[] = [];
+
     if (classIds.length > 0) {
-      const { data: logs } = await supabase
+      const { data: schedData } = await supabase
+        .from('class_schedules')
+        .select('*')
+        .in('class_id', classIds);
+      schedules = schedData || [];
+
+      const { data: logData } = await supabase
         .from('teaching_logs')
         .select('*')
         .in('class_id', classIds)
         .gte('date', startDate)
         .lte('date', endDate);
-
-      monthLogs = logs || [];
+      logs = logData || [];
     }
 
-    // 3. Group by class
+    const cancelledSessions: Record<string, boolean> = user.cancelled_sessions || {};
+
+    const logMap = new Map<string, any>();
+    logs.forEach((l: any) => {
+      logMap.set(`${l.class_id}_${l.date}`, l);
+    });
+
+    // 3. Group by class & calculate day by day from startDate to endDate
     const classBreakdownMap = new Map<number, {
       class_id: number;
       name: string;
@@ -81,22 +95,50 @@ export async function GET(request: Request) {
 
     let totalTeachingSalary = 0;
 
-    monthLogs.forEach((log: any) => {
-      const item = classBreakdownMap.get(log.class_id);
-      if (item) {
-        if (log.status === 'ATTENDED') {
-          item.attended_count++;
-          item.total_amount += item.rate_per_session;
-          totalTeachingSalary += item.rate_per_session;
-        } else if (log.status === 'EXTRA') {
-          item.extra_count++;
-          item.total_amount += item.rate_per_session;
-          totalTeachingSalary += item.rate_per_session;
-        } else if (log.status === 'OFF') {
-          item.off_count++;
+    const currDate = new Date(startDate);
+    const stopDate = new Date(endDate);
+
+    while (currDate <= stopDate) {
+      const cellDateStr = currDate.toISOString().split('T')[0];
+      const dow = currDate.getDay();
+
+      const activeSchedules = schedules.filter((s: any) =>
+        s.day_of_week === dow &&
+        (s.valid_from ? s.valid_from <= cellDateStr : true) &&
+        (s.valid_to ? cellDateStr <= s.valid_to : true)
+      );
+
+      activeSchedules.forEach((s: any) => {
+        const cancelKey = `${s.class_id}_${cellDateStr}`;
+        const log = logMap.get(cancelKey);
+        const isCancelled = !!cancelledSessions[cancelKey] || log?.status === 'OFF';
+
+        const item = classBreakdownMap.get(s.class_id);
+        if (item) {
+          if (isCancelled) {
+            item.off_count += 1;
+          } else {
+            item.attended_count += 1;
+            item.total_amount += item.rate_per_session;
+            totalTeachingSalary += item.rate_per_session;
+          }
         }
-      }
-    });
+      });
+
+      // Extra logs for this date
+      logs.forEach((log: any) => {
+        if (log.date === cellDateStr && log.status === 'EXTRA') {
+          const item = classBreakdownMap.get(log.class_id);
+          if (item) {
+            item.extra_count += 1;
+            item.total_amount += item.rate_per_session;
+            totalTeachingSalary += item.rate_per_session;
+          }
+        }
+      });
+
+      currDate.setDate(currDate.getDate() + 1);
+    }
 
     const classesBreakdown = Array.from(classBreakdownMap.values());
 
