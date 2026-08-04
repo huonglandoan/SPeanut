@@ -11,9 +11,9 @@ Skill này cho phép OpenClaw tự động tương tác với hệ thống **SPe
 
 - **Base URL**: `https://s-peanut.vercel.app/api/v1/openclaw` *(hoặc `http://localhost:3000/api/v1/openclaw` khi chạy local)*
 - **Headers**:
-  - `Authorization`: `Bearer speanut_sk_openclaw_2026` *(thay thế bằng OPENCLAW_API_KEY nếu bạn tùy chỉnh trong .env.local/Vercel)*
+  - `Authorization`: `Bearer speanut_sk_openclaw_2026`
   - `Content-Type`: `application/json`
-  - `x-user-email`: `email_google_cua_ban@gmail.com` *(nếu bạn đăng nhập bằng Google Gmail)*
+  - `x-user-email`: `lanhuong04011643@gmail.com`
 
 ---
 
