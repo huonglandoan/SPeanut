@@ -78,51 +78,21 @@ export async function POST(request: Request) {
       }, { status: 400, headers: corsHeaders });
     }
 
-    // Check if log already exists for this class_id and date
-    const { data: existingLogs } = await supabase
-      .from('teaching_logs')
-      .select('*')
-      .eq('class_id', targetClassId)
-      .eq('date', date);
+    // Sync with user.cancelled_sessions in public.users table (matching web app)
+    const cancelKey = `${targetClassId}_${date}`;
+    const currentCancelled = { ...(user.cancelled_sessions || {}) };
 
-    let resultData: any = null;
+    if (status === 'OFF') {
+      currentCancelled[cancelKey] = true;
+    } else if (status === 'ATTENDED') {
+      delete currentCancelled[cancelKey];
+    }
 
-    if (existingLogs && existingLogs.length > 0) {
-      // Update existing record
-      const existingId = existingLogs[0].id;
-      const { data, error } = await supabase
-        .from('teaching_logs')
-        .update({
-          status,
-          note: note !== undefined ? note : existingLogs[0].note,
-          start_time: start_time || existingLogs[0].start_time,
-          end_time: end_time || existingLogs[0].end_time,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existingId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      resultData = data;
-    } else {
-      // Insert new record
-      const { data, error } = await supabase
-        .from('teaching_logs')
-        .insert({
-          class_id: targetClassId,
-          date,
-          status,
-          note: note || null,
-          start_time: start_time || null,
-          end_time: end_time || null,
-          updated_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      resultData = data;
+    if (user.id && user.id !== 'user_openclaw_active' && user.id !== 'user_openclaw_default') {
+      await supabase
+        .from('users')
+        .update({ cancelled_sessions: currentCancelled })
+        .eq('id', user.id);
     }
 
     const statusTextVN: Record<string, string> = {
@@ -135,13 +105,12 @@ export async function POST(request: Request) {
       status: 'success',
       message: `Đã ghi nhận điểm danh lớp "${targetClassName}" cho ngày ${date} với trạng thái: ${statusTextVN[status] || status}.`,
       log: {
-        id: resultData.id,
         class_id: targetClassId,
         class_name: targetClassName,
         date,
         status,
-        note: resultData.note,
-        updated_at: resultData.updated_at,
+        note: note || null,
+        updated_at: new Date().toISOString(),
       },
     }, { status: 200, headers: corsHeaders });
 

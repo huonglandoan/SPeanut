@@ -33,61 +33,67 @@ export async function GET(request: Request) {
     const classMap = new Map<number, any>((classes || []).map((c: any) => [c.id, c]));
     const classIds = (classes || []).map((c: any) => c.id);
 
-    // 2. Today's schedule
-    let todayClasses: any[] = [];
+    // 2. Fetch class schedules
+    let schedules: any[] = [];
     if (classIds.length > 0) {
-      const { data: schedules } = await supabase
+      const { data: schedData } = await supabase
         .from('class_schedules')
         .select('*')
-        .in('class_id', classIds)
-        .eq('day_of_week', currentDayOfWeek);
-
-      // Check teaching logs for today
-      const { data: todayLogs } = await supabase
-        .from('teaching_logs')
-        .select('*')
-        .in('class_id', classIds)
-        .eq('date', todayStr);
-
-      const logMap = new Map((todayLogs || []).map((l: any) => [l.class_id, l]));
-
-      todayClasses = (schedules || []).map((sched: any) => {
-        const cls = classMap.get(sched.class_id);
-        const log: any = logMap.get(sched.class_id);
-        return {
-          schedule_id: sched.id,
-          class_id: sched.class_id,
-          class_name: cls?.name || 'N/A',
-          short_name: cls?.short_name || 'N/A',
-          start_time: sched.start_time,
-          end_time: sched.end_time,
-          rate_per_session: Number(cls?.rate_per_session || 0),
-          type: cls?.type || 'FIXED',
-          status: log ? log.status : 'SCHEDULED', // SCHEDULED, ATTENDED, OFF, EXTRA
-          note: log?.note || null,
-        };
-      });
+        .in('class_id', classIds);
+      schedules = schedData || [];
     }
 
-    // 3. Monthly stats
-    const startOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
-    const endOfMonth = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0];
+    const cancelledSessions: Record<string, boolean> = user.cancelled_sessions || {};
 
+    // Today's classes
+    const todaySchedules = schedules.filter((s: any) =>
+      s.day_of_week === currentDayOfWeek &&
+      (s.valid_from ? s.valid_from <= todayStr : true) &&
+      (s.valid_to ? todayStr <= s.valid_to : true)
+    );
+
+    const todayClasses = todaySchedules.map((sched: any) => {
+      const cls = classMap.get(sched.class_id);
+      const cancelKey = `${sched.class_id}_${todayStr}`;
+      const isCancelled = !!cancelledSessions[cancelKey];
+
+      return {
+        schedule_id: sched.id,
+        class_id: sched.class_id,
+        class_name: cls?.name || 'N/A',
+        short_name: cls?.short_name || 'N/A',
+        start_time: sched.start_time,
+        end_time: sched.end_time,
+        rate_per_session: Number(cls?.rate_per_session || 0),
+        type: cls?.type || 'FIXED',
+        status: isCancelled ? 'OFF' : 'SCHEDULED', // OFF (báo nghỉ), SCHEDULED (có lịch dạy)
+        is_cancelled: isCancelled,
+      };
+    });
+
+    // 3. Monthly stats (from 1st of month to end of month)
+    const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
     let monthlyLogsCount = 0;
     let estimatedSalary = 0;
 
-    if (classIds.length > 0) {
-      const { data: monthLogs } = await supabase
-        .from('teaching_logs')
-        .select('*')
-        .in('class_id', classIds)
-        .gte('date', startOfMonth)
-        .lte('date', endOfMonth);
+    for (let d = 1; d <= daysInMonth; d++) {
+      const cellDateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const dateObj = new Date(currentYear, currentMonth - 1, d);
+      const dow = dateObj.getDay();
 
-      (monthLogs || []).forEach((log: any) => {
-        if (log.status === 'ATTENDED' || log.status === 'EXTRA') {
+      const activeSchedules = schedules.filter((s: any) =>
+        s.day_of_week === dow &&
+        (s.valid_from ? s.valid_from <= cellDateStr : true) &&
+        (s.valid_to ? cellDateStr <= s.valid_to : true)
+      );
+
+      activeSchedules.forEach((s: any) => {
+        const cancelKey = `${s.class_id}_${cellDateStr}`;
+        const isCancelled = !!cancelledSessions[cancelKey];
+
+        if (!isCancelled) {
           monthlyLogsCount++;
-          const cls = classMap.get(log.class_id);
+          const cls = classMap.get(s.class_id);
           if (cls) {
             estimatedSalary += Number(cls.rate_per_session || 0);
           }
@@ -95,14 +101,27 @@ export async function GET(request: Request) {
       });
     }
 
-    // Extra incomes total
+    // Extra incomes total for current month
     let extraIncomesTotal = 0;
-    const extraIncomes = user.extra_incomes || {};
-    Object.values(extraIncomes).forEach((item: any) => {
-      if (item && item.amount) {
-        extraIncomesTotal += Number(item.amount);
-      }
-    });
+    const dbKey = `${currentYear}_${currentMonth}`;
+    const userExtraIncomes = user.extra_incomes || {};
+    const monthExtra = userExtraIncomes[dbKey];
+
+    if (Array.isArray(monthExtra)) {
+      monthExtra.forEach((item: any) => {
+        if (item && item.amount) {
+          extraIncomesTotal += Number(item.amount);
+        }
+      });
+    } else {
+      Object.values(userExtraIncomes).forEach((item: any) => {
+        if (item && typeof item === 'object' && item.amount) {
+          extraIncomesTotal += Number(item.amount);
+        } else if (typeof item === 'number') {
+          extraIncomesTotal += item;
+        }
+      });
+    }
 
     return NextResponse.json({
       status: 'success',
