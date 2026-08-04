@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
-import { verifyOpenClawAuth } from '@/lib/openclaw-auth';
+import { verifyOpenClawAuth, handleCorsOptions, corsHeaders } from '@/lib/openclaw-auth';
+
+export async function OPTIONS() {
+  return handleCorsOptions();
+}
 
 export async function GET(request: Request) {
   const auth = await verifyOpenClawAuth(request);
   if (!auth.authenticated || !auth.user || !auth.supabase) {
-    return NextResponse.json({ error: auth.error }, { status: 401 });
+    return NextResponse.json({ error: auth.error }, { status: 401, headers: corsHeaders });
   }
 
   try {
@@ -130,10 +134,10 @@ export async function GET(request: Request) {
         total_extra_incomes: extraIncomesTotal,
         grand_total_income: totalTeachingSalary + extraIncomesTotal,
       },
-    }, { status: 200 });
+    }, { status: 200, headers: corsHeaders });
 
   } catch (err: any) {
     console.error('Error at GET /api/v1/openclaw/salary:', err);
-    return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 });
+    return NextResponse.json({ error: err.message || 'Server error' }, { status: 500, headers: corsHeaders });
   }
 }

@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
-import { verifyOpenClawAuth } from '@/lib/openclaw-auth';
+import { verifyOpenClawAuth, handleCorsOptions, corsHeaders } from '@/lib/openclaw-auth';
 
 const DAYS_VN = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+
+export async function OPTIONS() {
+  return handleCorsOptions();
+}
 
 export async function GET(request: Request) {
   const auth = await verifyOpenClawAuth(request);
   if (!auth.authenticated || !auth.user || !auth.supabase) {
-    return NextResponse.json({ error: auth.error }, { status: 401 });
+    return NextResponse.json({ error: auth.error }, { status: 401, headers: corsHeaders });
   }
 
   try {
@@ -61,18 +65,18 @@ export async function GET(request: Request) {
       status: 'success',
       count: result.length,
       classes: result,
-    }, { status: 200 });
+    }, { status: 200, headers: corsHeaders });
 
   } catch (err: any) {
     console.error('Error at GET /api/v1/openclaw/classes:', err);
-    return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 });
+    return NextResponse.json({ error: err.message || 'Server error' }, { status: 500, headers: corsHeaders });
   }
 }
 
 export async function POST(request: Request) {
   const auth = await verifyOpenClawAuth(request);
   if (!auth.authenticated || !auth.user || !auth.supabase) {
-    return NextResponse.json({ error: auth.error }, { status: 401 });
+    return NextResponse.json({ error: auth.error }, { status: 401, headers: corsHeaders });
   }
 
   try {
@@ -84,7 +88,7 @@ export async function POST(request: Request) {
     if (!name || !short_name || !rate_per_session) {
       return NextResponse.json({
         error: 'Thiếu thông tin bắt buộc. Cần có: name, short_name, rate_per_session.',
-      }, { status: 400 });
+      }, { status: 400, headers: corsHeaders });
     }
 
     const classType = (type || 'FIXED').toUpperCase();
@@ -107,10 +111,10 @@ export async function POST(request: Request) {
       status: 'success',
       message: `Đã tạo thành công lớp học "${name}" (${short_name}).`,
       class: newClass,
-    }, { status: 200 });
+    }, { status: 200, headers: corsHeaders });
 
   } catch (err: any) {
     console.error('Error at POST /api/v1/openclaw/classes:', err);
-    return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 });
+    return NextResponse.json({ error: err.message || 'Server error' }, { status: 500, headers: corsHeaders });
   }
 }

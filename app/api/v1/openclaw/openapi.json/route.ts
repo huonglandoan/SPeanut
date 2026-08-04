@@ -1,4 +1,9 @@
 import { NextResponse } from 'next/server';
+import { handleCorsOptions, corsHeaders } from '@/lib/openclaw-auth';
+
+export async function OPTIONS() {
+  return handleCorsOptions();
+}
 
 export async function GET(request: Request) {
   const host = request.headers.get('host') || 'localhost:3000';
@@ -167,5 +172,5 @@ export async function GET(request: Request) {
     },
   };
 
-  return NextResponse.json(openApiSpec, { status: 200 });
+  return NextResponse.json(openApiSpec, { status: 200, headers: corsHeaders });
 }

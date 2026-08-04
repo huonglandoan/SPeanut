@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
-import { verifyOpenClawAuth } from '@/lib/openclaw-auth';
+import { verifyOpenClawAuth, handleCorsOptions, corsHeaders } from '@/lib/openclaw-auth';
+
+export async function OPTIONS() {
+  return handleCorsOptions();
+}
 
 export async function POST(request: Request) {
   const auth = await verifyOpenClawAuth(request);
   if (!auth.authenticated || !auth.user || !auth.supabase) {
-    return NextResponse.json({ error: auth.error }, { status: 401 });
+    return NextResponse.json({ error: auth.error }, { status: 401, headers: corsHeaders });
   }
 
   try {
@@ -22,7 +26,7 @@ export async function POST(request: Request) {
     if (!validStatuses.includes(status.toUpperCase())) {
       return NextResponse.json({
         error: `Trạng thái không hợp lệ. Chỉ chấp nhận các giá trị: ${validStatuses.join(', ')}`,
-      }, { status: 400 });
+      }, { status: 400, headers: corsHeaders });
     }
     status = status.toUpperCase();
 
@@ -43,7 +47,7 @@ export async function POST(request: Request) {
       .eq('user_id', user.id);
 
     if (!userClasses || userClasses.length === 0) {
-      return NextResponse.json({ error: 'Không tìm thấy lớp học nào thuộc về tài khoản này.' }, { status: 404 });
+      return NextResponse.json({ error: 'Không tìm thấy lớp học nào thuộc về tài khoản này.' }, { status: 404, headers: corsHeaders });
     }
 
     if (!targetClassId && (class_name || class_id)) {
@@ -62,6 +66,8 @@ export async function POST(request: Request) {
       const matched = userClasses.find((c: any) => c.id === targetClassId);
       if (matched) {
         targetClassName = matched.name;
+      } else {
+        targetClassId = 0;
       }
     }
 
@@ -69,7 +75,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         error: 'Không tìm thấy lớp học với tên hoặc class_id được cung cấp.',
         available_classes: userClasses.map((c: any) => ({ id: c.id, name: c.name, short_name: c.short_name })),
-      }, { status: 400 });
+      }, { status: 400, headers: corsHeaders });
     }
 
     // Check if log already exists for this class_id and date
@@ -137,10 +143,10 @@ export async function POST(request: Request) {
         note: resultData.note,
         updated_at: resultData.updated_at,
       },
-    }, { status: 200 });
+    }, { status: 200, headers: corsHeaders });
 
   } catch (err: any) {
     console.error('Error at POST /api/v1/openclaw/attendance:', err);
-    return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 });
+    return NextResponse.json({ error: err.message || 'Server error' }, { status: 500, headers: corsHeaders });
   }
 }

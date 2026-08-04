@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
-import { verifyOpenClawAuth } from '@/lib/openclaw-auth';
+import { verifyOpenClawAuth, handleCorsOptions, corsHeaders } from '@/lib/openclaw-auth';
 
 const DAYS_VN = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+
+export async function OPTIONS() {
+  return handleCorsOptions();
+}
 
 export async function GET(request: Request) {
   const auth = await verifyOpenClawAuth(request);
   if (!auth.authenticated || !auth.user || !auth.supabase) {
-    return NextResponse.json({ error: auth.error }, { status: 401 });
+    return NextResponse.json({ error: auth.error }, { status: 401, headers: corsHeaders });
   }
 
   try {
@@ -46,7 +50,7 @@ export async function GET(request: Request) {
         start_date: startDateParam,
         end_date: endDateParam,
         schedule: [],
-      }, { status: 200 });
+      }, { status: 200, headers: corsHeaders });
     }
 
     // 2. Fetch class schedules & teaching logs
@@ -137,10 +141,10 @@ export async function GET(request: Request) {
         end_date: endDateParam,
       },
       schedule: scheduleByDate,
-    }, { status: 200 });
+    }, { status: 200, headers: corsHeaders });
 
   } catch (err: any) {
     console.error('Error at GET /api/v1/openclaw/schedule:', err);
-    return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 });
+    return NextResponse.json({ error: err.message || 'Server error' }, { status: 500, headers: corsHeaders });
   }
 }

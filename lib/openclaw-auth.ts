@@ -1,6 +1,19 @@
 // @/lib/openclaw-auth.ts
 import { createClient } from '@supabase/supabase-js';
 
+export const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, x-user-id, x-user-email',
+};
+
+export function handleCorsOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: corsHeaders,
+  });
+}
+
 export interface OpenClawAuthResult {
   authenticated: boolean;
   error?: string;
@@ -59,9 +72,10 @@ export async function verifyOpenClawAuth(request: Request): Promise<OpenClawAuth
     if (requestedUserId) {
       userQuery = userQuery.eq('id', requestedUserId);
     } else if (requestedUserEmail) {
-      userQuery = userQuery.eq('email', requestedUserEmail);
+      userQuery = userQuery.eq('email', requestedUserEmail.trim());
     } else {
-      userQuery = userQuery.order('created_at', { ascending: true }).limit(1);
+      // Prioritize the most recently active/created user (e.g. Google logged-in user)
+      userQuery = userQuery.order('created_at', { ascending: false }).limit(1);
     }
 
     const { data: users, error: userError } = await userQuery;
