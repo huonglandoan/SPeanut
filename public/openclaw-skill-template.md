@@ -51,9 +51,9 @@ Skill này cho phép OpenClaw tự động tương tác với hệ thống **SPe
 ---
 
 ### 4. `get_speanut_salary`
-- **Mô tả**: Tra cứu thống kê chi tiết thù lao, số buổi thực dạy và các khoản phụ thu trong tháng.
-- **HTTP**: `GET /salary?month=7&year=2026`
-- **Khi nào dùng**: Khi người dùng hỏi "Lương tháng này của tôi là bao nhiêu?", "Chi tiết thù lao tháng 7 năm 2026".
+- **Mô tả**: Tra cứu thống kê chi tiết thù lao, tổng số buổi thực dạy và tổng thu nhập theo khoảng thời gian hoặc theo tháng.
+- **HTTP**: `GET /salary?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD` *(hoặc `GET /salary?month=8&year=2026`)*
+- **Khi nào dùng**: Khi người dùng hỏi "Từ 21/07 đến nay tôi được bao nhiêu lương và bao nhiêu buổi?", "Lương tháng này của tôi là bao nhiêu?", "Chi tiết thù lao tháng 8 năm 2026".
 
 ---
 

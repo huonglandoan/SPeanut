@@ -116,21 +116,35 @@ export async function GET(request: Request) {
       },
       '/salary': {
         get: {
-          summary: 'Xem thống kê bảng lương và thu nhập theo tháng',
+          summary: 'Xem thống kê bảng lương và thu nhập theo khoảng thời gian hoặc theo tháng',
           parameters: [
+            {
+              name: 'startDate',
+              in: 'query',
+              required: false,
+              schema: { type: 'string', format: 'date' },
+              description: 'Ngày bắt đầu (YYYY-MM-DD). Ví dụ: 2026-07-21.',
+            },
+            {
+              name: 'endDate',
+              in: 'query',
+              required: false,
+              schema: { type: 'string', format: 'date' },
+              description: 'Ngày kết thúc (YYYY-MM-DD). Ví dụ: 2026-08-04.',
+            },
             {
               name: 'month',
               in: 'query',
               required: false,
               schema: { type: 'integer', minimum: 1, maximum: 12 },
-              description: 'Tháng cần tra cứu (1-12). Mặc định là tháng hiện tại.',
+              description: 'Tháng cần tra cứu (1-12) (nếu không dùng startDate/endDate).',
             },
             {
               name: 'year',
               in: 'query',
               required: false,
               schema: { type: 'integer' },
-              description: 'Năm cần tra cứu (ví dụ: 2026). Mặc định là năm hiện tại.',
+              description: 'Năm cần tra cứu (ví dụ: 2026).',
             },
           ],
           responses: {

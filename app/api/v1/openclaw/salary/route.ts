@@ -18,11 +18,19 @@ export async function GET(request: Request) {
     const now = new Date();
     const localNow = new Date(now.getTime() + (7 * 60 - now.getTimezoneOffset()) * 60000);
 
-    const monthParam = searchParams.get('month') ? Number(searchParams.get('month')) : localNow.getMonth() + 1;
-    const yearParam = searchParams.get('year') ? Number(searchParams.get('year')) : localNow.getFullYear();
+    let startDate = searchParams.get('startDate');
+    let endDate = searchParams.get('endDate');
+    let periodLabel = '';
 
-    const startOfMonth = `${yearParam}-${String(monthParam).padStart(2, '0')}-01`;
-    const endOfMonth = new Date(yearParam, monthParam, 0).toISOString().split('T')[0];
+    if (startDate && endDate) {
+      periodLabel = `Từ ${startDate} đến ${endDate}`;
+    } else {
+      const monthParam = searchParams.get('month') ? Number(searchParams.get('month')) : localNow.getMonth() + 1;
+      const yearParam = searchParams.get('year') ? Number(searchParams.get('year')) : localNow.getFullYear();
+      startDate = `${yearParam}-${String(monthParam).padStart(2, '0')}-01`;
+      endDate = new Date(yearParam, monthParam, 0).toISOString().split('T')[0];
+      periodLabel = `Tháng ${String(monthParam).padStart(2, '0')}/${yearParam}`;
+    }
 
     // 1. Fetch user classes
     const { data: classes } = await supabase
@@ -33,15 +41,15 @@ export async function GET(request: Request) {
     const classMap = new Map((classes || []).map((c: any) => [c.id, c]));
     const classIds = (classes || []).map((c: any) => c.id);
 
-    // 2. Fetch teaching logs for month
+    // 2. Fetch teaching logs for month / date range
     let monthLogs: any[] = [];
     if (classIds.length > 0) {
       const { data: logs } = await supabase
         .from('teaching_logs')
         .select('*')
         .in('class_id', classIds)
-        .gte('date', startOfMonth)
-        .lte('date', endOfMonth);
+        .gte('date', startDate)
+        .lte('date', endDate);
 
       monthLogs = logs || [];
     }
@@ -119,7 +127,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       status: 'success',
-      month_year: `${String(monthParam).padStart(2, '0')}/${yearParam}`,
+      period: periodLabel,
+      start_date: startDate,
+      end_date: endDate,
       user_payment_info: {
         full_name: user.full_name,
         bank_brand: user.bank_brand || 'Chưa cập nhật',
