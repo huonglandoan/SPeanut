@@ -151,6 +151,59 @@ export async function GET(request: Request) {
             '200': { description: 'Thành công' },
           },
         },
+        post: {
+          summary: 'Thêm khoản thu nhập phụ (Trợ giảng, làm đề, chấm bài)',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['name', 'amount'],
+                  properties: {
+                    name: { type: 'string', description: 'Tên khoản thu ngoài (Ví dụ: Chấm bài thi thử)' },
+                    amount: { type: 'number', description: 'Số tiền thu ngoài (VND). Ví dụ: 300000' },
+                    month: { type: 'integer', description: 'Tháng áp dụng (1-12). Mặc định là tháng hiện tại' },
+                    year: { type: 'integer', description: 'Năm áp dụng. Mặc định là năm hiện tại' },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            '200': { description: 'Ghi nhận thu nhập phụ thành công' },
+          },
+        },
+      },
+      '/profile': {
+        get: {
+          summary: 'Xem thông tin cá nhân và tài khoản ngân hàng',
+          responses: {
+            '200': { description: 'Thành công' },
+          },
+        },
+        put: {
+          summary: 'Cập nhật thông tin cá nhân và tài khoản nhận lương',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    full_name: { type: 'string', description: 'Họ và tên' },
+                    bank_brand: { type: 'string', description: 'Tên ngân hàng (Ví dụ: Vietcombank)' },
+                    bank_number: { type: 'string', description: 'Số tài khoản ngân hàng' },
+                    bank_owner: { type: 'string', description: 'Tên chủ tài khoản' },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            '200': { description: 'Cập nhật thông tin thành công' },
+          },
+        },
       },
       '/classes': {
         get: {
@@ -169,10 +222,14 @@ export async function GET(request: Request) {
                   type: 'object',
                   required: ['name', 'short_name', 'rate_per_session'],
                   properties: {
-                    name: { type: 'string', description: 'Tên lớp học' },
-                    short_name: { type: 'string', description: 'Tên viết tắt của lớp' },
-                    rate_per_session: { type: 'number', description: 'Thù lao cho 1 buổi dạy (VND)' },
+                    name: { type: 'string', description: 'Tên lớp học (Ví dụ: Toán 11 cơ bản)' },
+                    short_name: { type: 'string', description: 'Tên viết tắt của lớp (Ví dụ: T11)' },
+                    rate_per_session: { type: 'number', description: 'Thù lao cho 1 buổi dạy (VND) (Ví dụ: 250000)' },
                     type: { type: 'string', enum: ['FIXED', 'EXTRA'], description: 'Phân loại lớp' },
+                    days_of_week: { type: 'array', items: { type: 'string' }, description: 'Các thứ học trong tuần (Ví dụ: ["thứ 3", "thứ 5"] hoặc [2, 4])' },
+                    valid_from: { type: 'string', format: 'date', description: 'Ngày bắt đầu áp dụng thời khóa biểu (YYYY-MM-DD). Ví dụ: 2026-09-01' },
+                    start_time: { type: 'string', description: 'Giờ bắt đầu học (HH:MM). Mặc định là 18:00' },
+                    end_time: { type: 'string', description: 'Giờ kết thúc học (HH:MM). Mặc định là 19:30' },
                   },
                 },
               },

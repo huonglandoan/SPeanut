@@ -193,3 +193,64 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: err.message || 'Server error' }, { status: 500, headers: corsHeaders });
   }
 }
+
+export async function POST(request: Request) {
+  const auth = await verifyOpenClawAuth(request);
+  if (!auth.authenticated || !auth.user || !auth.supabase) {
+    return NextResponse.json({ error: auth.error }, { status: 401, headers: corsHeaders });
+  }
+
+  try {
+    const { user, supabase } = auth;
+    const body = await request.json();
+    const { name, title, amount, month, year } = body;
+
+    const itemTitle = name || title;
+    const numAmount = Number(amount);
+
+    if (!itemTitle || !numAmount) {
+      return NextResponse.json({
+        error: 'Cần truyền name/title và amount (số tiền).',
+      }, { status: 400, headers: corsHeaders });
+    }
+
+    const now = new Date();
+    const targetMonth = month ? Number(month) : now.getMonth() + 1;
+    const targetYear = year ? Number(year) : now.getFullYear();
+    const dbKey = `${targetYear}_${targetMonth}`;
+
+    const currentExtra = user.extra_incomes || {};
+    const monthList = Array.isArray(currentExtra[dbKey]) ? currentExtra[dbKey] : [];
+
+    const newItem = {
+      id: Date.now().toString(),
+      name: itemTitle,
+      amount: numAmount,
+    };
+
+    const updatedMonthList = [...monthList, newItem];
+    const updatedExtraIncomes = {
+      ...currentExtra,
+      [dbKey]: updatedMonthList,
+    };
+
+    if (user.id && user.id !== 'user_openclaw_active' && user.id !== 'user_openclaw_default') {
+      await supabase
+        .from('users')
+        .update({ extra_incomes: updatedExtraIncomes })
+        .eq('id', user.id);
+    }
+
+    return NextResponse.json({
+      status: 'success',
+      message: `Đã ghi nhận khoản thu phụ "${itemTitle}" (${numAmount.toLocaleString('vi-VN')} VNĐ) vào Tháng ${targetMonth}/${targetYear}.`,
+      item: newItem,
+      month: targetMonth,
+      year: targetYear,
+    }, { status: 200, headers: corsHeaders });
+
+  } catch (err: any) {
+    console.error('Error at POST /api/v1/openclaw/salary:', err);
+    return NextResponse.json({ error: err.message || 'Server error' }, { status: 500, headers: corsHeaders });
+  }
+}
