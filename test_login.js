@@ -36,15 +36,15 @@ async function run() {
     console.log('ADMIN SUCCESS! Logged in as:', dataAdmin.user.email);
   }
 
-  console.log('--- USER LOGIN ---');
+  console.log('--- DEMO USER LOGIN ---');
   const { data: dataUser, error: errorUser } = await supabase.auth.signInWithPassword({
-    email: 'user@speanut.com',
-    password: '123456'
+    email: 'demo@speanut.com',
+    password: 'demo123456'
   });
   if (errorUser) {
-    console.error('USER FAIL:', errorUser.message);
+    console.error('DEMO USER FAIL:', errorUser.message);
   } else {
-    console.log('USER SUCCESS! Logged in as:', dataUser.user.email);
+    console.log('DEMO USER SUCCESS! Logged in as:', dataUser.user.email);
   }
 }
 

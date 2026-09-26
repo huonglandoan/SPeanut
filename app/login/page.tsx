@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState<'user' | 'admin' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -29,6 +30,36 @@ export default function LoginPage() {
     } else {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
+    }
+  };
+
+  const handleQuickDemo = async (role: 'user' | 'admin') => {
+    setError(null);
+    setSuccess(null);
+    setDemoLoading(role);
+    setLoading(true);
+
+    try {
+      const demoEmail = role === 'admin' ? 'admin' : 'demo';
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: demoEmail }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Không thể khởi tạo phiên demo.');
+      }
+
+      setSuccess(`Đang chuyển hướng sang giao diện ${role === 'admin' ? 'Quản Trị Viên' : 'Trợ Giảng'}...`);
+      setTimeout(() => {
+        window.location.href = data.redirectUrl || (role === 'admin' ? '/admin' : '/');
+      }, 400);
+    } catch (err: any) {
+      setError(err.message || 'Lỗi khi kích hoạt chế độ demo.');
+      setDemoLoading(null);
+      setLoading(false);
     }
   };
 
@@ -68,11 +99,6 @@ export default function LoginPage() {
     setLoading(true);
     try {
       let targetEmail = email.trim();
-      if (targetEmail === 'admin') {
-        targetEmail = 'admin@speanut.com';
-      } else if (targetEmail === 'user') {
-        targetEmail = 'user@speanut.com';
-      }
 
       // Gọi API server-side để set cookie đúng cách
       const response = await fetch('/api/login', {
@@ -89,16 +115,16 @@ export default function LoginPage() {
 
       setSuccess('Đăng nhập thành công!');
 
-      // Chuyển hướng
-      const target = (targetEmail === 'admin@speanut.com' || targetEmail === '111111@speanut.com') ? '/admin' : '/';
-      window.location.href = target;
+      // Chuyển hướng theo role trả về từ server
+      setTimeout(() => {
+        window.location.href = data.redirectUrl || '/';
+      }, 300);
     } catch (err: any) {
       // Dịch lỗi tiếng Anh sang tiếng Việt
       let msg = err.message;
       if (msg.includes('Invalid login credentials')) msg = 'Email hoặc mật khẩu không đúng.';
       else if (msg.includes('Email not confirmed')) msg = 'Email chưa được xác thực. Vui lòng kiểm tra hộp thư.';
       setError(msg);
-    } finally {
       setLoading(false);
     }
   };
@@ -118,12 +144,34 @@ export default function LoginPage() {
       </div>
 
       {/* 2. Tiêu đề Đăng nhập */}
-
       <p className={styles.authTitle}>Đăng nhập</p>
 
-      <form onSubmit={handleSubmit}>
+      {/* 3. Dùng thử nhanh */}
+      <div className={styles.demoSection}>
+        <div className={styles.demoLabel}>Dùng thử nhanh:</div>
+        <div className={styles.demoGrid}>
+          <button
+            type="button"
+            className={styles.demoBtn}
+            onClick={() => handleQuickDemo('user')}
+            disabled={loading}
+          >
+            {demoLoading === 'user' ? 'Đang vào...' : 'Trợ Giảng'}
+          </button>
 
-        {/*Email hoặc Tên đăng nhập*/}
+          <button
+            type="button"
+            className={styles.demoBtn}
+            onClick={() => handleQuickDemo('admin')}
+            disabled={loading}
+          >
+            {demoLoading === 'admin' ? 'Đang vào...' : 'Quản Trị Viên'}
+          </button>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        {/* Email hoặc Tên đăng nhập */}
         <div className={styles.fieldPanel}>
           <input
             type="text"
@@ -151,7 +199,7 @@ export default function LoginPage() {
         <div className={styles.actionGroup}></div>
 
         <button type="submit" disabled={loading} className={styles.buttonPrimary}>
-          {loading ? 'Đang tải...' : 'Đăng nhập'}
+          {loading && !demoLoading ? 'Đang tải...' : 'Đăng nhập'}
         </button>
 
         <div className={styles.divider}>
@@ -181,15 +229,6 @@ export default function LoginPage() {
             Đăng ký ngay
           </Link>
         </p>
-
-        {/*
-        <p className={styles.textMuted} style={{ marginTop: '12px', fontSize: '12px' }}>
-          Thiết lập hệ thống?{' '}
-          <Link href="/deploy" style={{ color: 'var(--primary, #735bf2)', fontWeight: 600, textDecoration: 'none' }}>
-            Cấu hình & Deploy
-          </Link>
-        </p>
-        */}
       </form>
     </div>
   );

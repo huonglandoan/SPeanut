@@ -241,3 +241,73 @@
   color: var(--text-main);
   opacity: 0.7;
 }
+
+/* Feedback messages */
+.feedbackError {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.feedbackSuccess {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* Minimalist Demo Login */
+.demoSection {
+  margin-bottom: 24px;
+}
+
+.demoLabel {
+  font-size: 0.8rem;
+  color: var(--text-main);
+  opacity: 0.65;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.demoGrid {
+  display: flex;
+  gap: 10px;
+}
+
+.demoBtn {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background-color: var(--bg-input);
+  color: var(--text-title);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.demoBtn:hover {
+  background-color: var(--bg-card);
+  border-color: var(--primary, #735bf2);
+  color: var(--primary, #735bf2);
+}
+
+.demoBtn:active {
+  transform: scale(0.98);
+}
+
+.demoBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

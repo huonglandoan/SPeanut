@@ -371,3 +371,45 @@
 :global(html.dark) .switchBtn {
   color: #ffffff;
 }
+
+.demoHeaderPill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(115, 91, 242, 0.08);
+  border: 1px solid rgba(115, 91, 242, 0.25);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+}
+
+:global(html.dark) .demoHeaderPill {
+  background: rgba(115, 91, 242, 0.16);
+  border-color: rgba(115, 91, 242, 0.35);
+}
+
+.demoTag {
+  font-weight: 700;
+  color: var(--primary, #735bf2);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.demoSwitchBtn {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-title);
+  border-radius: 9999px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.demoSwitchBtn:hover {
+  background: var(--primary, #735bf2);
+  color: #ffffff;
+  border-color: var(--primary, #735bf2);
+}

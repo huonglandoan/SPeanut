@@ -27,6 +27,7 @@ function DashboardContent() {
   const [activeNav, setActiveNav] = useState(1)
   const [isAiOpen, setIsAiOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [isDemoUser, setIsDemoUser] = useState(false)
   const router = useRouter()
 
   // Lấy hàm refresh từ context để kick-off fetch ngay sau khi auth xong
@@ -44,6 +45,7 @@ function DashboardContent() {
         // Nếu là admin -> Chuyển hướng thẳng sang trang quản trị /admin
         router.push('/admin')
       } else {
+        setIsDemoUser(session.user.email === 'demo@speanut.com' || session.user.email === 'user@speanut.com');
         setLoading(false);
         // Prefetch data ngay sau khi xác nhận đăng nhập thành công
         // Cả Calendar và Salary đều dùng chung data này, không cần fetch riêng
@@ -65,6 +67,20 @@ function DashboardContent() {
 
     return () => subscription.unsubscribe()
   }, [router, refreshSchedules, refreshProfile])
+
+  const handleSwitchToAdmin = async () => {
+    setLoading(true);
+    try {
+      await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'admin' }),
+      });
+      window.location.href = '/admin';
+    } catch {
+      setLoading(false);
+    }
+  };
 
   const handleToggleTheme = (mode: 'light' | 'dark') => {
     if (mode === 'dark') {
@@ -103,7 +119,22 @@ function DashboardContent() {
   return (
    <div className={styles.wrapper}>
     <div className={styles.topHeader}>
-      <div id="top-left-portal-root" />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div id="top-left-portal-root" />
+        {isDemoUser && (
+          <div className={styles.demoHeaderPill}>
+            <span className={styles.demoTag}>Demo: Trợ Giảng</span>
+            <button
+              type="button"
+              className={styles.demoSwitchBtn}
+              onClick={handleSwitchToAdmin}
+              title="Chuyển sang xem giao diện Quản Trị Viên"
+            >
+              Xem Admin
+            </button>
+          </div>
+        )}
+      </div>
       <div className={styles.switchContainer} id="tour-theme-switcher">
         <div className={styles.slider} />
         <button type="button" className={styles.switchBtn} onClick={() => handleToggleTheme('light')}>☀️</button>

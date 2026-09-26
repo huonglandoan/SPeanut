@@ -151,6 +151,19 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
     }
   };
 
+  const handleSwitchToDemoUser = async () => {
+    try {
+      await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'demo' }),
+      });
+      window.location.href = '/';
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleLogout = async () => {
     if (typeof document !== 'undefined') {
       document.cookie = 'google_provider_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
@@ -513,6 +526,14 @@ export default function AdminDashboardView({ onLogout }: AdminDashboardProps) {
               <ChevronRight size={18} />
             </button>
           </div>
+          <button
+            onClick={handleSwitchToDemoUser}
+            className={styles.adminLogoutBtn}
+            style={{ marginRight: '8px', color: 'var(--primary, #735BF2)', borderColor: 'rgba(115, 91, 242, 0.3)', backgroundColor: 'rgba(115, 91, 242, 0.08)' }}
+            title="Chuyển sang xem giao diện Trợ Giảng (Demo)"
+          >
+            Xem giao diện Trợ Giảng
+          </button>
           <button
             onClick={() => { window.location.href = '/deploy'; }}
             className={styles.adminLogoutBtn}
