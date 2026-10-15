@@ -204,6 +204,25 @@ export default function CalendarView({
   };
 
   const startCalendarSync = async (accessToken: string) => {
+    setSyncProgress('Đang tải dữ liệu lịch dạy mới nhất...');
+
+    // Luôn fetch mới từ API để tránh stale closure
+    // (người dùng có thể vừa tạo lớp mới ở tab Class mà chưa switch sang Calendar)
+    let freshSchedules = schedules;
+    try {
+      if (typeof window !== 'undefined' && localStorage.getItem('speanut_tour_mode') === 'true') {
+        const stored = localStorage.getItem('speanut_tour_schedules');
+        if (stored) freshSchedules = JSON.parse(stored);
+      } else {
+        const calRes = await fetch('/api/calendar');
+        if (calRes.ok) {
+          freshSchedules = await calRes.json();
+        }
+      }
+    } catch (e) {
+      console.warn('Không thể fetch schedules mới, dùng cache:', e);
+    }
+
     setSyncProgress('Đang phân tích lịch dạy...');
     const daysInMonth = new Date(year, month, 0).getDate();
     const eventsToCreate: any[] = [];
@@ -213,7 +232,7 @@ export default function CalendarView({
       const dateObj = new Date(year, month - 1, d);
       const dow = dateObj.getDay();
 
-      const activeSchedules = schedules.filter((s: any) => {
+      const activeSchedules = freshSchedules.filter((s: any) => {
         if (s.type === 'EXTRA') {
           return s.valid_from === cellDateStr;
         }
@@ -432,8 +451,13 @@ export default function CalendarView({
   };
 
   // Sync cancelled_sessions từ profile khi mở tab Calendar
+  // Đồng thời refresh schedules để Calendar luôn thấy data mới nhất
+  // (ví dụ: vừa tạo class ở tab Class xong rồi switch sang Calendar)
   useEffect(() => {
     if (activeNav === 1) {
+      // Refresh schedules để đảm bảo hiển thị đúng class mới tạo
+      refreshSchedules();
+
       if (!profile) {
         refreshProfile();
       } else if (profile.cancelled_sessions && typeof profile.cancelled_sessions === 'object') {
@@ -441,7 +465,7 @@ export default function CalendarView({
         localStorage.setItem('speanut_cancelled_sessions', JSON.stringify(profile.cancelled_sessions));
       }
     }
-  }, [activeNav, profile, refreshProfile]);
+  }, [activeNav, profile, refreshProfile, refreshSchedules]);
 
   useEffect(() => {
     const stored = localStorage.getItem('speanut_cancelled_sessions');

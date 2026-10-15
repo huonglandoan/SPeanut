@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 
@@ -12,6 +12,20 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+
+// ===== Viewport: Fix màn hình mobile, không bị zoom/kéo tùm lum =====
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,        // Khoá zoom bằng gesture (pinch-to-zoom)
+  userScalable: false,    // Tắt hoàn toàn user zoom
+  viewportFit: 'cover',   // Tận dụng toàn bộ màn hình kể cả safe area (notch, home bar)
+  interactiveWidget: 'resizes-content', // Bàn phím ảo không đẩy layout lên
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f8fafc' },
+    { media: '(prefers-color-scheme: dark)', color: '#0b0f19' },
+  ],
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://s-peanut.vercel.app'),

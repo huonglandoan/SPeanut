@@ -48,25 +48,43 @@ html.dark {
   --red: #ff3b30;
 }
 
+/* ── Mobile: Chống kéo lệch ngang, scroll dọc tự nhiên mượt mà ───────────────── */
+html {
+  height: 100%;
+  width: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
 /* Cấu hình Responsive toàn cục cho body */
 body {
   background-color: var(--bg-app);
   color: var(--text-title);
   margin: 0;
-  padding: 20px; /* Thêm padding để khi trên điện thoại form không bị dính sát mép màn hình */
+  padding: 0;
   box-sizing: border-box;
-  display: flex;
-  justify-content: center; /* Căn giữa form theo chiều ngang */
-  align-items: center;     /* Căn giữa form theo chiều dọc */
-  min-height: 100vh;       /* Chiếm hết chiều cao màn hình */
+  width: 100%;
+  min-height: 100%;
   font-family: system-ui, -apple-system, sans-serif;
   transition: background-color 0.35s ease, color 0.35s ease;
+  overflow-x: hidden;              /* Chặn hoàn toàn tràn/kéo xô lệch ngang */
+  overscroll-behavior-x: none;     /* Không nảy giật ngang */
+  touch-action: pan-y;             /* Chỉ cho phép vuốt dọc — loại bỏ hoàn toàn cảm giác "kéo tùm lum" */
+  -webkit-overflow-scrolling: touch; /* Cuộn quán tính mượt mà chuẩn iOS native */
 }
 
 /* Ép tất cả các phần tử chuyển màu mượt mà */
 * {
   box-sizing: border-box;
   transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease;
+}
+
+/* ── Các page dùng form login/register: căn giữa riêng ────── */
+.page-centered {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100dvh;
+  padding: 20px;
 }
 
 /* Loader and skeleton animations */

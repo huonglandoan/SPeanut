@@ -130,6 +130,7 @@ export default function LoginPage() {
   };
 
   return (
+    <div className="page-centered">
     <div className={styles.authCard}>
       {/* Thẻ H1 chuẩn SEO cho Google xếp hạng từ khóa SPeanut */}
       <h1 className="sr-only" style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', borderWidth: 0 }}>
@@ -230,6 +231,7 @@ export default function LoginPage() {
           </Link>
         </p>
       </form>
+    </div>
     </div>
   );
 } 

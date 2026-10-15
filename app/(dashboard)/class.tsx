@@ -165,7 +165,8 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
 
       setSuccess("Cập nhật lớp học thành công!");
       setChangingScheduleClassId(null);
-      fetchClasses(true); // invalidate cache sau khi sửa
+      // Reload cả class list lẫn schedules để Calendar cập nhật ngay
+      await Promise.all([fetchClasses(true), refreshSchedules()]);
     } catch (err: any) {
       setError(err.message || "Có lỗi xảy ra khi cập nhật lớp.");
     } finally { setLoading(false); }
@@ -223,7 +224,8 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
       if (!res.ok) throw new Error(data.error);
 
       setSuccess("Xóa lớp thành công!");
-      fetchClasses(true); // invalidate cache sau khi xóa
+      // Reload cả class list lẫn schedules để Calendar cập nhật ngay
+      await Promise.all([fetchClasses(true), refreshSchedules()]);
     } catch (err: any) { 
       setError(err.message); 
     } finally { setLoading(false); }
@@ -317,7 +319,9 @@ export default function FixedClassForm({ activeNav }: { activeNav?: number }) {
 
       setSuccess("Tạo lớp thành công!");
       setName(''); setShort_Name(''); setRate_Per_Session(''); setSelectedDays([]);
-      fetchClasses(true); // invalidate cache sau khi tạo mới
+      // Reload cả danh sách lớp lẫn schedules trong AppDataContext
+      // để Calendar hiển thị ngay lịch vừa tạo mà không cần reload trang
+      await Promise.all([fetchClasses(true), refreshSchedules()]);
       setActiveTab('LIST');
     } catch (err: any) { 
       setError(err.message); 

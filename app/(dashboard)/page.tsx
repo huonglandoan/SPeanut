@@ -142,7 +142,9 @@ function DashboardContent() {
       </div>
     </div>
 
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', width: '100%', paddingBottom: '40px' }}>
+    {/* ── Vùng nội dung scroll ──────────────────────────────────── */}
+    {/* Chỉ vùng này scroll — header và bottom nav cố định bên ngoài */}
+    <div className={styles.scrollArea}>
       <div style={{ display: activeNav === 0 ? 'block' : 'none', width: '100%' }}>
         <Scheduler activeNav={activeNav} />
       </div>

@@ -110,6 +110,7 @@ export default function RegisterPage() {
   };
 
   return (
+    <div className="page-centered">
     <div className={styles.authCard}>
 
       {/* Thanh gạt dark/light */}
@@ -197,6 +198,7 @@ export default function RegisterPage() {
           </Link>
         </div>
       </form>
+    </div>
     </div>
   );
 }
